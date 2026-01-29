@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>المستشار الخبير - الهيئة العامة للاستثمار المصرية</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="logo">
+                <h1>🎯 المستشار الخبير</h1>
+                <p>مساعد لجان المتابعة - الهيئة العامة للاستثمار</p>
+            </div>
+            <div class="status">
+                <span id="status-indicator" class="status-loading">⏳ جاري التحميل...</span>
+                <span id="db-size" class="db-info"></span>
+            </div>
+        </header>
+
+        <!-- Chat Area -->
+        <div class="chat-container" id="chat-container">
+            <div class="welcome-message">
+                <h2>مرحباً بك في المستشار الخبير</h2>
+                <p>يمكنني مساعدتك في:</p>
+                <ul>
+                    <li>✅ التراخيص والجهات المختصة لكل نشاط</li>
+                    <li>📋 القوانين والأدلة الإرشادية</li>
+                    <li>🏭 المناطق الصناعية وقرارات الإنشاء</li>
+                    <li>💰 أنشطة القرار 104 والحوافز</li>
+                    <li>🔍 النقاط الفنية للمعاينة</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Input Area -->
+        <div class="input-container">
+            <div class="quick-questions" id="quick-questions">
+                <button class="quick-btn" onclick="askQuestion('ما هي التراخيص المطلوبة للنشاط الصناعي؟')">
+                    🏭 النشاط الصناعي
+                </button>
+                <button class="quick-btn" onclick="askQuestion('ما هي المناطق الصناعية بالقاهرة؟')">
+                    📍 مناطق القاهرة
+                </button>
+                <button class="quick-btn" onclick="askQuestion('هل خلايا الطاقة الشمسية في القرار 104؟')">
+                    💰 القرار 104
+                </button>
+            </div>
+            <div class="input-wrapper">
+                <textarea 
+                    id="query-input" 
+                    placeholder="اكتب سؤالك هنا... (اضغط Enter للإرسال، Shift+Enter لسطر جديد)"
+                    rows="1"
+                    disabled
+                ></textarea>
+                <button id="send-btn" onclick="sendQuery()" disabled>
+                    <span>إرسال</span>
+                    <span class="icon">📤</span>
+                </button>
+            </div>
+            <div class="memory-indicator" id="memory-indicator"></div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="loader.js"></script>
+    <script src="intent-engine.js"></script>
+    <script src="core.js"></script>
+    <script>
+        let conversationHistory = [];
+
+        // Initialize on load
+        window.addEventListener('load', async () => {
+            await initializeSystem();
+        });
+
+        async function initializeSystem() {
+            const statusEl = document.getElementById('status-indicator');
+            const inputEl = document.getElementById('query-input');
+            const sendBtn = document.getElementById('send-btn');
+
+            try {
+                statusEl.textContent = '⏳ جاري تحميل قواعد البيانات...';
+                statusEl.className = 'status-loading';
+
+                // Load data
+                const startTime = Date.now();
+                await DataLoader.initialize();
+                const loadTime = ((Date.now() - startTime) / 1000).toFixed(2);
+
+                // Update UI
+                statusEl.textContent = '✅ جاهز للاستخدام';
+                statusEl.className = 'status-ready';
+                
+                const dbSize = document.getElementById('db-size');
+                dbSize.textContent = `📊 ${DataLoader.getTotalVectors()} متجه | ⚡ ${loadTime}ث`;
+
+                inputEl.disabled = false;
+                sendBtn.disabled = false;
+                inputEl.focus();
+
+            } catch (error) {
+                statusEl.textContent = '❌ خطأ في التحميل';
+                statusEl.className = 'status-error';
+                console.error('Initialization error:', error);
+                addMessage('system', `حدث خطأ: ${error.message}`);
+            }
+        }
+
+        async function sendQuery() {
+            const input = document.getElementById('query-input');
+            const query = input.value.trim();
+            
+            if (!query) return;
+
+            // Add user message
+            addMessage('user', query);
+            input.value = '';
+            input.style.height = 'auto';
+
+            // Show thinking indicator
+            const thinkingId = addMessage('assistant', '🤔 جاري التفكير...', true);
+
+            try {
+                // Process query
+                const result = await ExpertAssistant.answer(query, conversationHistory);
+                
+                // Remove thinking indicator
+                document.getElementById(thinkingId)?.remove();
+
+                // Add assistant response
+                addMessage('assistant', result.answer, false, result);
+
+                // Update conversation history
+                conversationHistory.push({
+                    question: query,
+                    answer: result.answer,
+                    intent: result.intent,
+                    entities: result.entities,
+                    timestamp: Date.now()
+                });
+
+                // Keep only last 5 exchanges
+                if (conversationHistory.length > 5) {
+                    conversationHistory = conversationHistory.slice(-5);
+                }
+
+                updateMemoryIndicator();
+
+            } catch (error) {
+                document.getElementById(thinkingId)?.remove();
+                addMessage('system', `خطأ: ${error.message}`);
+            }
+        }
+
+        function addMessage(type, content, isTemp = false, data = null) {
+            const chatContainer = document.getElementById('chat-container');
+            const messageId = `msg-${Date.now()}-${Math.random()}`;
+            
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${type}-message`;
+            messageDiv.id = messageId;
+
+            if (type === 'user') {
+                messageDiv.innerHTML = `
+                    <div class="message-content">${escapeHtml(content)}</div>
+                `;
+            } else if (type === 'assistant') {
+                let sourcesHtml = '';
+                if (data && data.sources && data.sources.length > 0) {
+                    sourcesHtml = '<div class="sources">';
+                    sourcesHtml += '<div class="sources-header">📚 المصادر:</div>';
+                    data.sources.forEach((src, idx) => {
+                        const confidence = (src.score * 100).toFixed(0);
+                        const confidenceClass = confidence > 80 ? 'high' : confidence > 60 ? 'medium' : 'low';
+                        sourcesHtml += `
+                            <div class="source-item">
+                                <span class="source-label">${idx + 1}.</span>
+                                <span class="source-text">${escapeHtml(src.text)}</span>
+                                <span class="confidence ${confidenceClass}">${confidence}%</span>
+                            </div>
+                        `;
+                    });
+                    sourcesHtml += '</div>';
+                }
+
+                messageDiv.innerHTML = `
+                    <div class="message-content">${formatAnswer(content)}</div>
+                    ${sourcesHtml}
+                `;
+            } else {
+                messageDiv.className = 'message system-message';
+                messageDiv.innerHTML = `<div class="message-content">${escapeHtml(content)}</div>`;
+            }
+
+            chatContainer.appendChild(messageDiv);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+
+            return messageId;
+        }
+
+        function formatAnswer(text) {
+            // Format the answer with better readability
+            text = escapeHtml(text);
+            
+            // Bold headers
+            text = text.replace(/^(#+)\s*(.+)$/gm, '<strong>$2</strong>');
+            
+            // Line breaks
+            text = text.replace(/\n/g, '<br>');
+            
+            // Bullet points
+            text = text.replace(/^-\s+(.+)$/gm, '• $1');
+            
+            return text;
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function askQuestion(question) {
+            document.getElementById('query-input').value = question;
+            sendQuery();
+        }
+
+        function updateMemoryIndicator() {
+            const indicator = document.getElementById('memory-indicator');
+            const count = conversationHistory.length;
+            
+            if (count > 0) {
+                indicator.innerHTML = `💭 الذاكرة: ${count}/5 محادثات سابقة`;
+                indicator.style.display = 'block';
+            } else {
+                indicator.style.display = 'none';
+            }
+        }
+
+        // Auto-resize textarea
+        document.getElementById('query-input')?.addEventListener('input', function() {
+            this.style.height = 'auto';
+            this.style.height = Math.min(this.scrollHeight, 150) + 'px';
+        });
+
+        // Enter to send, Shift+Enter for new line
+        document.getElementById('query-input')?.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendQuery();
+            }
+        });
+    </script>
+</body>
+</html>
