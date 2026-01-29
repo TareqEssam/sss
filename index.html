@@ -3,34 +3,192 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>المستشار الخبير - الهيئة العامة للاستثمار المصرية</title>
+    <title>المستشار الخبير المتقدم - الهيئة العامة للاستثمار المصرية</title>
     <link rel="stylesheet" href="style.css">
+    <style>
+        /* إضافات للميزات الجديدة */
+        .ambiguity-panel {
+            background: linear-gradient(135deg, #fff4e6 0%, #ffe8cc 100%);
+            border-right: 4px solid #ff9800;
+            padding: 20px;
+            border-radius: 12px;
+            margin: 15px 0;
+        }
+
+        .ambiguity-header {
+            font-weight: 700;
+            color: #e65100;
+            margin-bottom: 15px;
+            font-size: 1.05rem;
+        }
+
+        .ambiguity-options {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .ambiguity-option {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 2px solid transparent;
+        }
+
+        .ambiguity-option:hover {
+            border-color: #ff9800;
+            transform: translateX(-5px);
+            box-shadow: 0 4px 12px rgba(255, 152, 0, 0.2);
+        }
+
+        .ambiguity-option-title {
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 5px;
+        }
+
+        .ambiguity-option-details {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+
+        .confidence-indicator {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 15px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-right: 8px;
+        }
+
+        .confidence-high {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .confidence-medium {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .confidence-low {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .thinking-animation {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--text-secondary);
+        }
+
+        .thinking-dots {
+            display: flex;
+            gap: 4px;
+        }
+
+        .thinking-dot {
+            width: 8px;
+            height: 8px;
+            background: var(--primary-color);
+            border-radius: 50%;
+            animation: thinkingBounce 1.4s infinite ease-in-out;
+        }
+
+        .thinking-dot:nth-child(1) {
+            animation-delay: -0.32s;
+        }
+
+        .thinking-dot:nth-child(2) {
+            animation-delay: -0.16s;
+        }
+
+        @keyframes thinkingBounce {
+            0%, 80%, 100% {
+                transform: scale(0);
+                opacity: 0.5;
+            }
+            40% {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        .intelligence-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 4px 12px;
+            border-radius: 15px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            margin: 0 5px;
+        }
+
+        .analysis-panel {
+            background: #f8f9fa;
+            padding: 12px;
+            border-radius: 8px;
+            margin-top: 10px;
+            font-size: 0.9rem;
+            border-right: 3px solid #667eea;
+        }
+
+        .analysis-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin: 5px 0;
+            color: var(--text-secondary);
+        }
+
+        .suggestions-panel {
+            background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+            border-right: 4px solid #2196f3;
+            padding: 15px;
+            border-radius: 12px;
+            margin: 15px 0;
+        }
+
+        .suggestions-header {
+            font-weight: 600;
+            color: #1565c0;
+            margin-bottom: 10px;
+        }
+
+        .suggestion-btn {
+            background: white;
+            border: 1px solid #2196f3;
+            color: #1976d2;
+            padding: 8px 16px;
+            border-radius: 20px;
+            margin: 5px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.2s;
+            display: inline-block;
+        }
+
+        .suggestion-btn:hover {
+            background: #2196f3;
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(33, 150, 243, 0.3);
+        }
+    </style>
 </head>
 <body>
-    <!-- إضافة عناصر الذكاء -->
-<div class="intelligence-panel" id="intelligence-panel">
-    <div class="intelligence-header">
-        <span>🧠 تحليل ذكي</span>
-        <button onclick="toggleIntelligence()">📊</button>
-    </div>
-    <div class="intelligence-content" id="intelligence-content">
-        <!-- سيتم ملؤه ديناميكياً -->
-    </div>
-</div>
-
-<!-- إضافة توقع الأسئلة -->
-<div class="prediction-bar" id="prediction-bar">
-    <span>🤔 قد ترغب في:</span>
-    <div class="predictions" id="predictions">
-        <!-- توقعات الأسئلة -->
-    </div>
-</div>
     <div class="container">
         <!-- Header -->
         <header class="header">
             <div class="logo">
-                <h1>🎯 المستشار الخبير</h1>
-                <p>مساعد لجان المتابعة - الهيئة العامة للاستثمار</p>
+                <h1>🎯 المستشار الخبير المتقدم</h1>
+                <p>مساعد ذكي متطور لجان المتابعة - الهيئة العامة للاستثمار</p>
             </div>
             <div class="status">
                 <span id="status-indicator" class="status-loading">⏳ جاري التحميل...</span>
@@ -41,8 +199,20 @@
         <!-- Chat Area -->
         <div class="chat-container" id="chat-container">
             <div class="welcome-message">
-                <h2>مرحباً بك في المستشار الخبير</h2>
-                <p>يمكنني مساعدتك في:</p>
+                <h2>مرحباً بك في المستشار الخبير المتقدم</h2>
+                <p>نظام ذكاء متقدم لفهم عميق ودقيق لاستفساراتك</p>
+                <div class="intelligence-badge">
+                    <span>🧠</span>
+                    <span>فهم سياقي ذكي</span>
+                </div>
+                <div class="intelligence-badge">
+                    <span>🎯</span>
+                    <span>تحليل النوايا</span>
+                </div>
+                <div class="intelligence-badge">
+                    <span>✨</span>
+                    <span>إجابات احترافية</span>
+                </div>
                 <ul>
                     <li>✅ التراخيص والجهات المختصة لكل نشاط</li>
                     <li>📋 القوانين والأدلة الإرشادية</li>
@@ -84,8 +254,8 @@
 
     <!-- Scripts -->
     <script src="loader.js"></script>
-    <script src="intent-engine.js"></script>
-    <script src="core-v2.js"></script>
+    <script src="intent-engine-v2.js"></script>
+    <script src="core-v3.js"></script>
     <script>
         let conversationHistory = [];
 
@@ -103,16 +273,11 @@
                 statusEl.textContent = '⏳ جاري تحميل قواعد البيانات...';
                 statusEl.className = 'status-loading';
 
-                // Load data
                 const startTime = Date.now();
                 await DataLoader.initialize();
                 const loadTime = ((Date.now() - startTime) / 1000).toFixed(2);
 
-                // Initialize embedding model
-                statusEl.textContent = '✅ جاري التجهيز...';
-
-                // Update UI
-                statusEl.textContent = '✅ جاهز للاستخدام';
+                statusEl.textContent = '✅ جاهز للاستخدام - نظام ذكي متقدم';
                 statusEl.className = 'status-ready';
                 
                 const dbSize = document.getElementById('db-size');
@@ -141,18 +306,27 @@
             input.value = '';
             input.style.height = 'auto';
 
-            // Show thinking indicator
-            const thinkingId = addMessage('assistant', '🤔 جاري التفكير...', true);
+            // Show advanced thinking indicator
+            const thinkingId = addThinkingIndicator();
 
             try {
-                // Process query
+                const startTime = Date.now();
+                
+                // Process query with advanced system
                 const result = await ExpertAssistant.answer(query, conversationHistory);
+                
+                const processingTime = ((Date.now() - startTime) / 1000).toFixed(2);
                 
                 // Remove thinking indicator
                 document.getElementById(thinkingId)?.remove();
 
-                // Add assistant response
-                addMessage('assistant', result.answer, false, result);
+                // Handle ambiguous results
+                if (result.hasAmbiguity && result.similarGroups.length > 0) {
+                    addAmbiguityPanel(result.similarGroups[0], query);
+                } else {
+                    // Add assistant response
+                    addMessage('assistant', result.answer, false, result, processingTime);
+                }
 
                 // Update conversation history
                 conversationHistory.push({
@@ -160,7 +334,10 @@
                     answer: result.answer,
                     intent: result.intent,
                     entities: result.entities,
-                    timestamp: Date.now()
+                    confidence: result.confidence,
+                    hasAmbiguity: result.hasAmbiguity,
+                    timestamp: Date.now(),
+                    sources: result.sources
                 });
 
                 // Keep only last 5 exchanges
@@ -176,7 +353,79 @@
             }
         }
 
-        function addMessage(type, content, isTemp = false, data = null) {
+        function addThinkingIndicator() {
+            const chatContainer = document.getElementById('chat-container');
+            const messageId = `thinking-${Date.now()}`;
+            
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'message assistant-message';
+            messageDiv.id = messageId;
+            messageDiv.innerHTML = `
+                <div class="message-content thinking-animation">
+                    <span>🧠 جاري التحليل والبحث</span>
+                    <div class="thinking-dots">
+                        <div class="thinking-dot"></div>
+                        <div class="thinking-dot"></div>
+                        <div class="thinking-dot"></div>
+                    </div>
+                </div>
+            `;
+
+            chatContainer.appendChild(messageDiv);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+
+            return messageId;
+        }
+
+        function addAmbiguityPanel(similarResults, originalQuery) {
+            const chatContainer = document.getElementById('chat-container');
+            const panelDiv = document.createElement('div');
+            panelDiv.className = 'message assistant-message';
+            
+            let optionsHtml = '';
+            similarResults.forEach((result, idx) => {
+                const confidence = (result.score * 100).toFixed(1);
+                const sourceIcon = result.source === 'activities' ? '📋' : 
+                                 result.source === 'industrial' ? '🏭' : '💰';
+                
+                const matchInfo = result.matchDetails ? 
+                    `التطابق في: ${result.matchDetails.matchedWords.slice(0, 3).join('، ')}` : '';
+                
+                optionsHtml += `
+                    <div class="ambiguity-option" onclick="selectAmbiguousOption('${escapeHtml(result.text)}')">
+                        <div class="ambiguity-option-title">
+                            ${sourceIcon} ${escapeHtml(result.text)}
+                            <span class="confidence-indicator confidence-${confidence > 75 ? 'high' : confidence > 60 ? 'medium' : 'low'}">
+                                ${confidence}%
+                            </span>
+                        </div>
+                        <div class="ambiguity-option-details">${matchInfo}</div>
+                    </div>
+                `;
+            });
+            
+            panelDiv.innerHTML = `
+                <div class="message-content">
+                    <div class="ambiguity-panel">
+                        <div class="ambiguity-header">
+                            🤔 وجدت عدة نتائج متقاربة - يرجى التحديد:
+                        </div>
+                        <div class="ambiguity-options">
+                            ${optionsHtml}
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            chatContainer.appendChild(panelDiv);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+
+        function selectAmbiguousOption(selectedText) {
+            askQuestion(selectedText);
+        }
+
+        function addMessage(type, content, isTemp = false, data = null, processingTime = null) {
             const chatContainer = document.getElementById('chat-container');
             const messageId = `msg-${Date.now()}-${Math.random()}`;
             
@@ -189,13 +438,61 @@
                     <div class="message-content">${escapeHtml(content)}</div>
                 `;
             } else if (type === 'assistant') {
+                let intelligenceHtml = '';
+                if (data) {
+                    // Intelligence analysis panel
+                    intelligenceHtml = '<div class="analysis-panel">';
+                    
+                    if (data.intent && data.intent.primary) {
+                        const intentAr = getIntentNameArabic(data.intent.primary.name);
+                        const confidence = (data.intent.primary.confidence * 100).toFixed(0);
+                        intelligenceHtml += `
+                            <div class="analysis-item">
+                                <span>🎯</span>
+                                <span><strong>النية:</strong> ${intentAr} (${confidence}%)</span>
+                            </div>
+                        `;
+                    }
+                    
+                    if (data.confidence) {
+                        const confPercent = (data.confidence * 100).toFixed(1);
+                        intelligenceHtml += `
+                            <div class="analysis-item">
+                                <span>📊</span>
+                                <span><strong>دقة النتيجة:</strong> ${confPercent}%</span>
+                            </div>
+                        `;
+                    }
+                    
+                    if (processingTime) {
+                        intelligenceHtml += `
+                            <div class="analysis-item">
+                                <span>⚡</span>
+                                <span><strong>زمن المعالجة:</strong> ${processingTime}ث</span>
+                            </div>
+                        `;
+                    }
+                    
+                    if (data.entities && Object.keys(data.entities).length > 0) {
+                        const entitiesStr = Object.values(data.entities).flat().join('، ');
+                        intelligenceHtml += `
+                            <div class="analysis-item">
+                                <span>🏷️</span>
+                                <span><strong>الكيانات:</strong> ${escapeHtml(entitiesStr)}</span>
+                            </div>
+                        `;
+                    }
+                    
+                    intelligenceHtml += '</div>';
+                }
+
                 let sourcesHtml = '';
                 if (data && data.sources && data.sources.length > 0) {
                     sourcesHtml = '<div class="sources">';
-                    sourcesHtml += '<div class="sources-header">📚 المصادر:</div>';
+                    sourcesHtml += '<div class="sources-header">📚 المصادر المستخدمة:</div>';
                     data.sources.forEach((src, idx) => {
-                        const confidence = (src.score * 100).toFixed(0);
-                        const confidenceClass = confidence > 80 ? 'high' : confidence > 60 ? 'medium' : 'low';
+                        const confidence = (src.score * 100).toFixed(1);
+                        const confidenceClass = confidence > 75 ? 'high' : confidence > 60 ? 'medium' : 'low';
                         sourcesHtml += `
                             <div class="source-item">
                                 <span class="source-label">${idx + 1}.</span>
@@ -209,6 +506,7 @@
 
                 messageDiv.innerHTML = `
                     <div class="message-content">${formatAnswer(content)}</div>
+                    ${intelligenceHtml}
                     ${sourcesHtml}
                 `;
             } else {
@@ -222,18 +520,38 @@
             return messageId;
         }
 
+        function getIntentNameArabic(intentName) {
+            const mapping = {
+                'ACTIVITY_LICENSE': 'التراخيص',
+                'ACTIVITY_AUTHORITY': 'الجهات المختصة',
+                'ACTIVITY_LAW': 'القوانين',
+                'ACTIVITY_GUIDE': 'الأدلة الإرشادية',
+                'ACTIVITY_LOCATION': 'المواقع المناسبة',
+                'ACTIVITY_TECHNICAL': 'النقاط الفنية',
+                'ACTIVITY_DESCRIPTION': 'توصيف النشاط',
+                'INDUSTRIAL_ZONE': 'المناطق الصناعية',
+                'INDUSTRIAL_ZONE_AUTHORITY': 'جهة الولاية',
+                'INDUSTRIAL_ZONE_DECISION': 'قرار الإنشاء',
+                'INDUSTRIAL_ZONE_AREA': 'المساحة',
+                'INDUSTRIAL_ZONE_CHECK': 'التحقق من المنطقة',
+                'DECISION104': 'القرار 104',
+                'DECISION104_SECTOR': 'قطاع القرار 104',
+                'GENERAL': 'عام'
+            };
+            return mapping[intentName] || intentName;
+        }
+
         function formatAnswer(text) {
-            // Format the answer with better readability
             text = escapeHtml(text);
             
-            // Bold headers
-            text = text.replace(/^(#+)\s*(.+)$/gm, '<strong>$2</strong>');
+            // Bold headers (markdown style)
+            text = text.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
             
             // Line breaks
             text = text.replace(/\n/g, '<br>');
             
             // Bullet points
-            text = text.replace(/^-\s+(.+)$/gm, '• $1');
+            text = text.replace(/^•\s+(.+)$/gm, '&nbsp;&nbsp;&nbsp;• $1');
             
             return text;
         }
@@ -254,7 +572,9 @@
             const count = conversationHistory.length;
             
             if (count > 0) {
-                indicator.innerHTML = `💭 الذاكرة: ${count}/5 محادثات سابقة`;
+                const lastIntent = conversationHistory[conversationHistory.length - 1].intent;
+                const intentAr = lastIntent ? getIntentNameArabic(lastIntent.primary.name) : '';
+                indicator.innerHTML = `💭 السياق: ${count}/5 محادثات | آخر موضوع: ${intentAr}`;
                 indicator.style.display = 'block';
             } else {
                 indicator.style.display = 'none';
@@ -274,257 +594,6 @@
                 sendQuery();
             }
         });
-        // ================ دوال الذكاء الإضافية ================
-
-        // عرض تحليل الذكاء
-        function displayIntelligenceAnalysis(result) {
-            const panel = document.getElementById('intelligence-content');
-            if (!panel) return;
-
-            let html = `
-                <div class="intelligence-item">
-                    <strong>النية المكتشفة:</strong> ${result.intent.name}
-                    <br><small>ثقة: ${(result.intent.confidence * 100).toFixed(0)}%</small>
-                </div>
-            `;
-
-            if (result.entities && result.entities.activities && result.entities.activities.length > 0) {
-                html += `
-                    <div class="intelligence-item">
-                        <strong>الأنشطة المحددة:</strong>
-                        ${result.entities.activities.map(a => a.name).join(', ')}
-                    </div>
-                `;
-            }
-
-            if (result.explanation) {
-                html += `
-                    <div class="intelligence-item">
-                        <strong>كيف فهمت السؤال:</strong>
-                        <br>${result.explanation}
-                    </div>
-                `;
-            }
-
-            panel.innerHTML = html;
-            document.getElementById('intelligence-panel').style.display = 'block';
-        }
-
-        // عرض توقعات الأسئلة
-        function displayPredictions(predictions) {
-            const container = document.getElementById('predictions');
-            if (!container) return;
-
-            if (!predictions || predictions.length === 0) {
-                container.innerHTML = '<span style="color: #666">لا توجد توقعات حالياً</span>';
-                return;
-            }
-
-            let html = '';
-            predictions.forEach((pred, idx) => {
-                html += `
-                    <button class="prediction-btn" onclick="askPrediction('${pred.replace(/'/g, "\\'")}')">
-                        ${pred}
-                    </button>
-                `;
-            });
-
-            container.innerHTML = html;
-        }
-
-        // دالة لطرح سؤال توقع
-        function askPrediction(question) {
-            document.getElementById('query-input').value = question;
-            sendQuery();
-        }
-
-        // تبديل عرض لوحة الذكاء
-        function toggleIntelligence() {
-            const content = document.getElementById('intelligence-content');
-            if (content.style.display === 'none') {
-                content.style.display = 'block';
-            } else {
-                content.style.display = 'none';
-            }
-        }
-
-        // تحديث دالة sendQuery لاستخدام الذكاء
-        async function sendQuery() {
-            const input = document.getElementById('query-input');
-            const query = input.value.trim();
-            
-            if (!query) return;
-
-            // إضافة رسالة المستخدم
-            addMessage('user', query);
-            input.value = '';
-            input.style.height = 'auto';
-
-            // إظهار مؤشر التفكير
-            const thinkingId = addMessage('assistant', '🧠 جاري التحليل الذكي...', true);
-
-            try {
-                // معالجة الاستعلام بالذكاء المحسن
-                const result = await ExpertAssistant.answer(query, conversationHistory);
-                
-                // إزالة مؤشر التفكير
-                document.getElementById(thinkingId)?.remove();
-
-                // إضافة رد المساعد مع الذكاء
-                const messageId = addMessage('assistant', result.answer, false, result);
-                
-                // إضافة شرح الذكاء إذا كان موجوداً
-                if (result.explanation) {
-                    const explanationDiv = document.createElement('div');
-                    explanationDiv.className = 'explanation';
-                    explanationDiv.innerHTML = `💡 ${result.explanation}`;
-                    document.getElementById(messageId)?.appendChild(explanationDiv);
-                }
-
-                // تحديث سجل المحادثة
-                conversationHistory.push({
-                    question: query,
-                    answer: result.answer,
-                    intent: result.intent,
-                    entities: result.entities,
-                    timestamp: Date.now()
-                });
-
-                // الاحتفاظ بآخر 5 تبادلات فقط
-                if (conversationHistory.length > 5) {
-                    conversationHistory = conversationHistory.slice(-5);
-                }
-
-                updateMemoryIndicator();
-
-                // عرض التوقعات وتحليل الذكاء
-                if (result.predictions) {
-                    displayPredictions(result.predictions);
-                }
-
-                if (result.intent && result.intent.name !== 'ERROR') {
-                    displayIntelligenceAnalysis(result);
-                }
-
-                // إظهار لوحة الذكاء تلقائياً
-                document.getElementById('intelligence-panel').style.display = 'block';
-
-            } catch (error) {
-                document.getElementById(thinkingId)?.remove();
-                addMessage('system', `⚠️ خطأ ذكي: ${error.message}`);
-            }
-        }
-
-        // تحسين دالة addMessage لدعم الرسائل الذكية
-        function addMessage(type, content, isTemp = false, data = null) {
-            const chatContainer = document.getElementById('chat-container');
-            const messageId = `msg-${Date.now()}-${Math.random()}`;
-            
-            const messageDiv = document.createElement('div');
-            messageDiv.className = `message ${type}-message ${data?.intent?.name?.startsWith('ACTIVITY') ? 'smart-message' : ''}`;
-            messageDiv.id = messageId;
-
-            if (type === 'user') {
-                messageDiv.innerHTML = `
-                    <div class="message-content">${escapeHtml(content)}</div>
-                    <div class="message-time">${new Date().toLocaleTimeString('ar-EG', {hour: '2-digit', minute:'2-digit'})}</div>
-                `;
-            } else if (type === 'assistant') {
-                let sourcesHtml = '';
-                if (data && data.sources && data.sources.length > 0) {
-                    sourcesHtml = '<div class="sources">';
-                    sourcesHtml += '<div class="sources-header">🧭 مصادر متعددة:</div>';
-                    data.sources.forEach((src, idx) => {
-                        const confidence = (src.relevance * 100).toFixed(0);
-                        const confidenceClass = confidence > 80 ? 'high' : confidence > 60 ? 'medium' : 'low';
-                        const sourceIcon = src.dataType === 'activities' ? '📋' : 
-                                         src.dataType === 'industrial' ? '🏭' : '💰';
-                        
-                        sourcesHtml += `
-                            <div class="source-item">
-                                <span class="source-label">${sourceIcon} ${idx + 1}.</span>
-                                <span class="source-text">${escapeHtml(src.text)}</span>
-                                <span class="source-type">${src.dataType}</span>
-                                <span class="confidence ${confidenceClass}">${confidence}%</span>
-                            </div>
-                        `;
-                    });
-                    sourcesHtml += '</div>';
-                }
-
-                messageDiv.innerHTML = `
-                    <div class="message-header">
-                        <span class="assistant-avatar">🤖</span>
-                        <span class="intent-badge" style="background: ${getIntentColor(data?.intent?.name)}">
-                            ${getIntentLabel(data?.intent?.name)}
-                        </span>
-                    </div>
-                    <div class="message-content">${formatAnswer(content)}</div>
-                    ${sourcesHtml}
-                    <div class="message-time">${new Date().toLocaleTimeString('ar-EG', {hour: '2-digit', minute:'2-digit'})}</div>
-                `;
-            } else {
-                messageDiv.className = 'message system-message';
-                messageDiv.innerHTML = `
-                    <div class="message-content">${escapeHtml(content)}</div>
-                    <div class="message-time">${new Date().toLocaleTimeString('ar-EG', {hour: '2-digit', minute:'2-digit'})}</div>
-                `;
-            }
-
-            chatContainer.appendChild(messageDiv);
-            chatContainer.scrollTop = chatContainer.scrollHeight;
-
-            return messageId;
-        }
-
-        // دالات مساعدة للذكاء
-        function getIntentColor(intentName) {
-            const colors = {
-                'ACTIVITY_LICENSE': '#51cf66',
-                'ACTIVITY_AUTHORITY': '#339af0',
-                'ACTIVITY_LAW': '#ff6b6b',
-                'INDUSTRIAL_ZONE_SEARCH': '#ff922b',
-                'DECISION104_CHECK': '#cc5de8',
-                'GENERAL': '#adb5bd'
-            };
-            return colors[intentName] || '#adb5bd';
-        }
-
-        function getIntentLabel(intentName) {
-            const labels = {
-                'ACTIVITY_LICENSE': 'تراخيص',
-                'ACTIVITY_AUTHORITY': 'جهات',
-                'ACTIVITY_LAW': 'قوانين',
-                'INDUSTRIAL_ZONE_SEARCH': 'مناطق صناعية',
-                'DECISION104_CHECK': 'قرار 104',
-                'GENERAL': 'عام'
-            };
-            return labels[intentName] || 'عام';
-        }
-
-        // تحسين دالة formatAnswer للإجابات الذكية
-        function formatAnswer(text) {
-            text = escapeHtml(text);
-            
-            // تحسين التنسيق للإجابات الذكية
-            text = text.replace(/^\*\*(.+?)\*\*\n/gm, '<strong class="answer-title">$1</strong><br>');
-            text = text.replace(/\n\n/g, '</div><div class="answer-section">');
-            text = text.replace(/\n/g, '<br>');
-            text = text.replace(/•/g, '• ');
-            text = text.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
-            
-            return `<div class="answer-content"><div class="answer-section">${text}</div></div>`;
-        }
-
-        // تحسين escapeHtml
-        function escapeHtml(text) {
-            const div = document.createElement('div');
-            div.textContent = text;
-            return div.innerHTML.replace(/"/g, '&quot;').replace(/'/g, '&#039;');
-        }
-        
     </script>
 </body>
 </html>
-
-
