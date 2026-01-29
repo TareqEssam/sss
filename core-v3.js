@@ -602,6 +602,16 @@ const ExpertAssistant = (() => {
         let answer = `✅ **${topResult.text}**\n`;
         answer += `└─ دقة التطابق: ${confidence}%\n\n`;
         
+        // إذا لم يكن هناك extracted أو كان فارغاً
+        if (!extracted || Object.keys(extracted).length === 0) {
+            answer += '⚠️ **المعلومات التفصيلية غير متوفرة حالياً**\n\n';
+            answer += 'يمكنك:\n';
+            answer += '• تحديد السؤال بشكل أكثر دقة\n';
+            answer += '• السؤال عن نشاط آخر\n';
+            answer += '• التواصل مع الهيئة مباشرة\n';
+            return answer;
+        }
+        
         // حسب نوع السؤال
         if (intentName.includes('LICENSE') && extracted?.licenses) {
             answer += `📋 **التراخيص والمتطلبات:**\n${extracted.licenses}\n\n`;
@@ -636,29 +646,41 @@ const ExpertAssistant = (() => {
             answer += `📝 **توصيف الإجراءات:**\n${extracted.description}\n\n`;
         }
         
-        // إذا لم يكن سؤال محدد، اعرض ملخص
-        if (!intentName.includes('LICENSE') && 
-            !intentName.includes('AUTHORITY') && 
-            !intentName.includes('LAW') &&
-            !intentName.includes('GUIDE') &&
-            !intentName.includes('LOCATION') &&
-            !intentName.includes('TECHNICAL') &&
-            !intentName.includes('DESCRIPTION')) {
+        // إذا لم يكن سؤال محدد أو السؤال محدد لكن لا توجد بيانات
+        let hasDisplayedInfo = false;
+        
+        if (intentName.includes('LICENSE') && extracted?.licenses) hasDisplayedInfo = true;
+        if (intentName.includes('AUTHORITY') && extracted?.authority) hasDisplayedInfo = true;
+        if (intentName.includes('LAW') && extracted?.law) hasDisplayedInfo = true;
+        if (intentName.includes('GUIDE') && extracted?.guide) hasDisplayedInfo = true;
+        if (intentName.includes('LOCATION') && extracted?.location) hasDisplayedInfo = true;
+        if (intentName.includes('TECHNICAL') && extracted?.technical) hasDisplayedInfo = true;
+        if (intentName.includes('DESCRIPTION') && extracted?.description) hasDisplayedInfo = true;
+        
+        // إذا لم نعرض أي معلومات محددة، اعرض ملخص عام
+        if (!hasDisplayedInfo) {
+            if (extracted.licenses) {
+                answer += `📋 **المتطلبات:**\n${extracted.licenses.substring(0, 600)}${extracted.licenses.length > 600 ? '...' : ''}\n\n`;
+            }
+            if (extracted.authority) {
+                answer += `🏛️ **الجهة المختصة:**\n${extracted.authority}\n\n`;
+            }
+            if (extracted.law) {
+                answer += `⚖️ **السند القانوني:**\n${extracted.law.substring(0, 300)}${extracted.law.length > 300 ? '...' : ''}\n\n`;
+            }
             
-            if (extracted) {
-                if (extracted.licenses) {
-                    answer += `📋 **المتطلبات:**\n${extracted.licenses.substring(0, 400)}${extracted.licenses.length > 400 ? '...' : ''}\n\n`;
-                }
-                if (extracted.authority) {
-                    answer += `🏛️ **الجهة المختصة:**\n${extracted.authority}\n\n`;
-                }
+            // إذا لم يكن هناك أي معلومات
+            if (!extracted.licenses && !extracted.authority && !extracted.law) {
+                answer += '📝 **المعلومات المتاحة:**\n';
+                answer += 'النشاط موجود في قاعدة البيانات، لكن التفاصيل محدودة حالياً.\n\n';
             }
             
             answer += '💡 **يمكنني إخبارك المزيد عن:**\n';
-            answer += '• التراخيص والإجراءات التفصيلية\n';
-            answer += '• القوانين واللوائح المنظمة\n';
-            answer += '• النقاط الفنية للمعاينة\n';
-            answer += '• الأماكن المناسبة لممارسة النشاط';
+            if (extracted.licenses) answer += '• التراخيص والإجراءات التفصيلية\n';
+            if (extracted.authority) answer += '• الجهات المختصة\n';
+            if (extracted.law) answer += '• القوانين واللوائح المنظمة\n';
+            if (extracted.technical) answer += '• النقاط الفنية للمعاينة\n';
+            if (extracted.location) answer += '• الأماكن المناسبة لممارسة النشاط\n';
         }
         
         return answer;
@@ -669,6 +691,33 @@ const ExpertAssistant = (() => {
      */
     function generateIndustrialAnswer(query, results, intent, extracted) {
         const intentName = intent?.primary?.name || '';
+        const queryNorm = IntentEngine.normalizeArabic(query);
+        
+        // سؤال عن العدد؟
+        if (queryNorm.includes('كم عدد') || queryNorm.includes('عدد')) {
+            let answer = `📊 **إجمالي المناطق الصناعية: ${results.length} منطقة**\n\n`;
+            
+            if (intent.entities && intent.entities.governorates) {
+                answer += `📍 في محافظة ${intent.entities.governorates[0]}\n\n`;
+            }
+            
+            answer += '🏭 **قائمة المناطق:**\n\n';
+            results.slice(0, 15).forEach((result, idx) => {
+                const gov = extractSection(result.enrichedText, 'المحافظة:');
+                answer += `${idx + 1}. ${result.text}`;
+                if (gov) answer += ` - ${gov}`;
+                answer += '\n';
+            });
+            
+            if (results.length > 15) {
+                answer += `\n... و ${results.length - 15} منطقة أخرى\n`;
+            }
+            
+            answer += '\n💡 **للحصول على تفاصيل منطقة معينة:**\n';
+            answer += 'اسأل عن اسم المنطقة مثل: "المنطقة الصناعية بالعاشر من رمضان"';
+            
+            return answer;
+        }
         
         // حالة منطقة واحدة محددة
         if (results.length === 1 || (results[0].score - results[1]?.score > 0.15)) {
