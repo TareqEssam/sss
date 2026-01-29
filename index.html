@@ -3,10 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>المستشار الخبير  - الهيئة العامة للاستثمار المصرية</title>
+    <title>المستشار الخبير الذكي - محسّن</title>
     <link rel="stylesheet" href="style.css">
     <style>
-        /* أنماط إضافية للأزرار التفاعلية */
+        /* أنماط إضافية للأزرار */
         .interactive-buttons {
             display: flex;
             flex-wrap: wrap;
@@ -23,9 +23,6 @@
             cursor: pointer;
             font-size: 0.95rem;
             font-weight: 600;
-            display: flex;
-            align-items: center;
-            gap: 8px;
             transition: all 0.3s ease;
             box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
         }
@@ -33,18 +30,6 @@
         .interactive-btn:hover {
             transform: translateY(-3px);
             box-shadow: 0 4px 12px rgba(102, 126, 234, 0.5);
-        }
-        
-        .interactive-btn.option-btn {
-            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-        }
-        
-        .interactive-btn.link-btn {
-            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-        }
-        
-        .interactive-btn.action-btn {
-            background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
         }
         
         .related-questions {
@@ -55,12 +40,6 @@
             border-right: 4px solid #667eea;
         }
         
-        .related-questions h4 {
-            color: #667eea;
-            margin-bottom: 12px;
-            font-size: 1rem;
-        }
-        
         .related-question {
             background: white;
             padding: 10px 15px;
@@ -69,7 +48,6 @@
             cursor: pointer;
             transition: all 0.2s;
             border: 1px solid #e0e0e0;
-            font-size: 0.9rem;
         }
         
         .related-question:hover {
@@ -97,133 +75,15 @@
             color: #1e40af;
             font-weight: 600;
             transition: all 0.2s;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
         
         .link-item:hover {
             transform: translateX(-5px);
-            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
-        }
-        
-        .link-icon {
-            font-size: 1.5rem;
-        }
-        
-        .selection-numbers {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-            margin: 15px 0;
-        }
-        
-        .number-btn {
-            width: 45px;
-            height: 45px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border: none;
-            font-size: 1.1rem;
-            font-weight: bold;
-            cursor: pointer;
-            transition: all 0.2s;
-            box-shadow: 0 2px 6px rgba(102, 126, 234, 0.3);
-        }
-        
-        .number-btn:hover {
-            transform: scale(1.1);
-            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.5);
-        }
-        
-        .confidence-badge {
-            display: inline-block;
-            padding: 5px 12px;
-            border-radius: 15px;
-            font-size: 0.85rem;
-            font-weight: 600;
-            margin-right: 8px;
-        }
-        
-        .confidence-badge.high {
-            background: #d1fae5;
-            color: #065f46;
-        }
-        
-        .confidence-badge.medium {
-            background: #fef3c7;
-            color: #92400e;
-        }
-        
-        .confidence-badge.low {
-            background: #fee2e2;
-            color: #991b1b;
-        }
-        
-        .typing-indicator {
-            display: inline-flex;
-            align-items: center;
-            gap: 4px;
-        }
-        
-        .typing-dot {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            background: #667eea;
-            animation: typing 1.4s infinite;
-        }
-        
-        .typing-dot:nth-child(2) {
-            animation-delay: 0.2s;
-        }
-        
-        .typing-dot:nth-child(3) {
-            animation-delay: 0.4s;
-        }
-        
-        @keyframes typing {
-            0%, 60%, 100% {
-                transform: translateY(0);
-                opacity: 0.7;
-            }
-            30% {
-                transform: translateY(-10px);
-                opacity: 1;
-            }
-        }
-        
-        .answer-card {
-            background: white;
-            border-radius: 12px;
-            padding: 20px;
-            margin: 15px 0;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-        }
-        
-        .answer-header {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin-bottom: 15px;
-            padding-bottom: 15px;
-            border-bottom: 2px solid #f0f0f0;
-        }
-        
-        .answer-icon {
-            font-size: 2rem;
-        }
-        
-        .answer-title {
-            flex: 1;
-            font-size: 1.3rem;
-            font-weight: 700;
-            color: #1e40af;
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <!-- Header -->
         <header class="header">
             <div class="logo">
                 <h1>🎯 المستشار الخبير الذكي</h1>
@@ -235,65 +95,38 @@
             </div>
         </header>
 
-        <!-- Chat Area -->
         <div class="chat-container" id="chat-container">
             <div class="welcome-message">
                 <h2>مرحباً بك في المستشار الخبير الذكي 🎓</h2>
-                <p>نظام ذكاء متقدم يفهم أسئلتك ويوفر إجابات احترافية شاملة</p>
-                
-                <div style="margin: 20px 0; display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
-                    <span class="intelligence-badge">
-                        <span>🧠</span>
-                        <span>فهم سياقي ذكي</span>
-                    </span>
-                    <span class="intelligence-badge">
-                        <span>🎯</span>
-                        <span>تحليل النوايا</span>
-                    </span>
-                    <span class="intelligence-badge">
-                        <span>✨</span>
-                        <span>إجابات تفاعلية</span>
-                    </span>
-                    <span class="intelligence-badge">
-                        <span>💬</span>
-                        <span>أسئلة متتابعة</span>
-                    </span>
-                </div>
+                <p>نظام ذكاء متقدم يفهم أسئلتك ويوفر إجابات احترافية</p>
                 
                 <ul>
-                    <li>✅ التراخيص والجهات المختصة لكل نشاط</li>
-                    <li>📋 القوانين والأدلة الإرشادية مع الروابط</li>
-                    <li>🏭 المناطق الصناعية مع الخرائط</li>
-                    <li>💰 حوافز القرار 104 وتصنيف القطاعات</li>
-                    <li>🔄 فهم الأسئلة المتتابعة والسياق</li>
+                    <li>✅ التراخيص والجهات المختصة</li>
+                    <li>📋 القوانين والأدلة الإرشادية</li>
+                    <li>🏭 المناطق الصناعية</li>
+                    <li>💰 القرار 104</li>
                     <li>🎛️ أزرار تفاعلية للاختيار السريع</li>
                 </ul>
-                
-                <p style="margin-top: 20px; color: #666;">جرّب أن تسأل أي سؤال 👇</p>
             </div>
         </div>
 
-        <!-- Input Area -->
         <div class="input-container">
             <div class="quick-questions">
                 <button class="quick-btn" onclick="askQuestion('ما هي شروط ترخيص مصنع ملابس؟')">
-                    🏭 ترخيص مصنع ملابس
+                    شروط ترخيص مصنع
                 </button>
                 <button class="quick-btn" onclick="askQuestion('المناطق الصناعية في القاهرة')">
-                    📍 المناطق الصناعية
+                    المناطق الصناعية
                 </button>
                 <button class="quick-btn" onclick="askQuestion('هل صناعة الأدوية في القرار 104؟')">
-                    💰 القرار 104
-                </button>
-                <button class="quick-btn" onclick="askQuestion('أين يمكن فتح مطعم؟')">
-                    🍽️ فتح مطعم
+                    القرار 104
                 </button>
             </div>
             
             <div class="input-wrapper">
                 <textarea 
                     id="query-input" 
-                    placeholder="اكتب سؤالك هنا... (أو اختر رقماً من الخيارات أعلاه)"
+                    placeholder="اكتب سؤالك هنا..."
                     rows="1"
                 ></textarea>
                 <button id="send-btn" onclick="sendQuery()">
@@ -301,93 +134,85 @@
                     <span>📤</span>
                 </button>
             </div>
-            
-            <div id="memory-indicator" class="memory-indicator"></div>
         </div>
     </div>
 
-    <!-- Scripts -->
     <script src="loader.js"></script>
     <script src="intent-engine-v2.js"></script>
-    <script src="enhanced-expert-system.js"></script>
+    <script src="core-v5-expert.js"></script>
+    <script src="enhanced-ui-wrapper.js"></script>
     
     <script>
-        let conversationHistory = [];
         let isProcessing = false;
+        let lastResponse = null;
 
-        // Initialize on load
         window.addEventListener('load', async () => {
             try {
                 const statusIndicator = document.getElementById('status-indicator');
                 const dbSize = document.getElementById('db-size');
                 
-                statusIndicator.textContent = '⏳ جاري تحميل البيانات...';
-                
-                // Initialize data loader
                 await DataLoader.initialize();
                 
                 const totalVectors = DataLoader.getTotalVectors();
                 
-                statusIndicator.textContent = '✅ جاهز للعمل';
+                statusIndicator.textContent = '✅ جاهز';
                 statusIndicator.className = 'status-ready';
-                dbSize.textContent = `📊 ${totalVectors.toLocaleString('ar-EG')} عنصر في قاعدة البيانات`;
+                dbSize.textContent = `📊 ${totalVectors.toLocaleString('ar-EG')} عنصر`;
                 
-                console.log('✅ النظام جاهز للعمل');
-                
-                // Focus on input
                 document.getElementById('query-input')?.focus();
                 
             } catch (error) {
-                console.error('❌ خطأ في التهيئة:', error);
-                const statusIndicator = document.getElementById('status-indicator');
-                statusIndicator.textContent = '❌ خطأ في التحميل';
-                statusIndicator.className = 'status-error';
-                
-                addMessage('system', 'حدث خطأ في تحميل البيانات. الرجاء إعادة تحميل الصفحة.');
+                console.error('❌ خطأ:', error);
+                document.getElementById('status-indicator').textContent = '❌ خطأ';
+                document.getElementById('status-indicator').className = 'status-error';
             }
         });
 
         async function sendQuery() {
             const input = document.getElementById('query-input');
-            const sendBtn = document.getElementById('send-btn');
             const query = input.value.trim();
 
             if (!query || isProcessing) return;
 
             isProcessing = true;
             input.disabled = true;
-            sendBtn.disabled = true;
+            document.getElementById('send-btn').disabled = true;
 
             try {
-                // Add user message
                 addMessage('user', query);
                 input.value = '';
-                input.style.height = 'auto';
 
-                // Show typing indicator
-                const thinkingId = addTypingIndicator();
+                const thinkingId = addMessage('assistant', 'جاري التفكير...', true);
 
-                // Process query with enhanced system
-                const result = await EnhancedExpertSystem.processQuery(query);
-
-                // Remove typing indicator
-                document.getElementById(thinkingId)?.remove();
-
-                // Add assistant response with all features
-                addEnhancedMessage(result);
-
-                // Update conversation history
-                conversationHistory.push({
-                    query: query,
-                    result: result
-                });
-
-                // Keep only last 10
-                if (conversationHistory.length > 10) {
-                    conversationHistory.shift();
+                // فحص إذا كان المستخدم يختار من خيارات سابقة
+                const selection = EnhancedUI.handleUserSelection(query, EnhancedUI.getLastResults());
+                
+                let result;
+                if (selection.isSelection) {
+                    // المستخدم اختار من الخيارات
+                    console.log('✅ اختيار:', selection.selectedIndex);
+                    // إعادة معالجة النتيجة المختارة
+                    result = await ExpertAssistant.processQuery(selection.selectedResult.text || query);
+                } else {
+                    // استعلام عادي
+                    result = await ExpertAssistant.processQuery(query);
                 }
 
-                updateMemoryIndicator();
+                document.getElementById(thinkingId)?.remove();
+
+                // تحسين النتيجة
+                const enhanced = EnhancedUI.enhanceResponse(result);
+                
+                // حفظ النتائج للاستخدام لاحقاً
+                if (enhanced.hasMultipleOptions) {
+                    EnhancedUI.saveResults(enhanced.results);
+                } else {
+                    EnhancedUI.saveResults(null);
+                }
+                
+                lastResponse = enhanced;
+
+                addEnhancedMessage(enhanced);
 
             } catch (error) {
                 console.error('❌ خطأ:', error);
@@ -395,158 +220,77 @@
             } finally {
                 isProcessing = false;
                 input.disabled = false;
-                sendBtn.disabled = false;
+                document.getElementById('send-btn').disabled = false;
                 input.focus();
             }
         }
 
-        function addMessage(type, content) {
+        function addMessage(type, content, isTemp = false) {
             const chatContainer = document.getElementById('chat-container');
             
-            // Remove welcome message on first interaction
             const welcome = chatContainer.querySelector('.welcome-message');
             if (welcome && type === 'user') {
                 welcome.remove();
             }
             
+            const messageId = `msg-${Date.now()}`;
             const messageDiv = document.createElement('div');
-            messageDiv.className = `message ${type}-message`;
+            messageDiv.className = `message ${type}-message${isTemp ? ' thinking' : ''}`;
+            messageDiv.id = messageId;
 
             if (type === 'user') {
-                messageDiv.innerHTML = `
-                    <div class="message-content">${escapeHtml(content)}</div>
-                `;
-            } else if (type === 'system') {
+                messageDiv.innerHTML = `<div class="message-content">${escapeHtml(content)}</div>`;
+            } else if (type === 'assistant') {
+                messageDiv.innerHTML = `<div class="message-content">${content}</div>`;
+            } else {
                 messageDiv.className = 'message system-message';
                 messageDiv.innerHTML = `<div class="message-content">${escapeHtml(content)}</div>`;
             }
 
             chatContainer.appendChild(messageDiv);
             chatContainer.scrollTop = chatContainer.scrollHeight;
-        }
 
-        function addTypingIndicator() {
-            const chatContainer = document.getElementById('chat-container');
-            const messageId = `typing-${Date.now()}`;
-            
-            const messageDiv = document.createElement('div');
-            messageDiv.className = 'message assistant-message';
-            messageDiv.id = messageId;
-            messageDiv.innerHTML = `
-                <div class="message-content">
-                    <div class="typing-indicator">
-                        <span class="typing-dot"></span>
-                        <span class="typing-dot"></span>
-                        <span class="typing-dot"></span>
-                    </div>
-                </div>
-            `;
-            
-            chatContainer.appendChild(messageDiv);
-            chatContainer.scrollTop = chatContainer.scrollHeight;
-            
             return messageId;
         }
 
-        function addEnhancedMessage(result) {
+        function addEnhancedMessage(response) {
             const chatContainer = document.getElementById('chat-container');
             
             const messageDiv = document.createElement('div');
             messageDiv.className = 'message assistant-message';
 
             let content = `<div class="message-content">`;
+            content += formatAnswer(response.answer);
             
-            // Main answer
-            content += `<div class="answer-card">`;
-            content += formatAnswer(result.answer);
-            content += `</div>`;
-            
-            // Interactive buttons
-            if (result.interactiveButtons && result.interactiveButtons.length > 0) {
+            // أزرار تفاعلية
+            if (response.interactiveButtons && response.interactiveButtons.length > 0) {
                 content += `<div class="interactive-buttons">`;
-                
-                result.interactiveButtons.forEach((btn, index) => {
-                    const btnClass = btn.action === 'select' ? 'option-btn' : 
-                                   btn.action === 'link' ? 'link-btn' : 'action-btn';
-                    content += `
-                        <button class="interactive-btn ${btnClass}" onclick="handleButtonClick('${btn.action}', ${JSON.stringify(btn.data).replace(/"/g, '&quot;')}, '${escapeHtml(btn.text)}')">
-                            ${escapeHtml(btn.text)}
-                        </button>
-                    `;
+                response.interactiveButtons.forEach(btn => {
+                    content += `<button class="interactive-btn" onclick="selectOption(${btn.data})">${escapeHtml(btn.text)}</button>`;
                 });
-                
                 content += `</div>`;
             }
             
-            // Links section
-            if (result.links && result.links.length > 0) {
+            // روابط
+            if (response.links && response.links.length > 0) {
                 content += `<div class="links-section">`;
-                content += `<h4 style="margin-bottom: 10px; color: #1e40af;">🔗 روابط مفيدة:</h4>`;
-                
-                result.links.forEach(link => {
-                    content += `
-                        <a href="${link.url}" target="_blank" class="link-item">
-                            <span class="link-icon">${link.icon}</span>
-                            <span>${escapeHtml(link.text)}</span>
-                            <span style="margin-right: auto;">↗️</span>
-                        </a>
-                    `;
+                content += `<h4>🔗 روابط مفيدة:</h4>`;
+                response.links.forEach(link => {
+                    content += `<a href="${link.url}" target="_blank" class="link-item">
+                        <span>${link.icon}</span>
+                        <span>${escapeHtml(link.text)}</span>
+                    </a>`;
                 });
-                
                 content += `</div>`;
             }
             
-            // Related questions
-            if (result.relatedQuestions && result.relatedQuestions.length > 0) {
+            // أسئلة مقترحة
+            if (response.relatedQuestions && response.relatedQuestions.length > 0) {
                 content += `<div class="related-questions">`;
                 content += `<h4>❓ أسئلة ذات صلة:</h4>`;
-                
-                result.relatedQuestions.forEach(question => {
-                    content += `
-                        <div class="related-question" onclick="askQuestion('${escapeHtml(question)}')">
-                            ${escapeHtml(question)}
-                        </div>
-                    `;
+                response.relatedQuestions.forEach(q => {
+                    content += `<div class="related-question" onclick="askQuestion('${escapeHtml(q)}')">${escapeHtml(q)}</div>`;
                 });
-                
-                content += `</div>`;
-            }
-            
-            // Analysis panel
-            if (result.intent || result.confidence || result.processingTime) {
-                content += `<div class="analysis-panel">`;
-                
-                if (result.intent?.primary) {
-                    const intentAr = getIntentNameArabic(result.intent.primary.name);
-                    const confidence = (result.intent.primary.confidence * 100).toFixed(0);
-                    content += `
-                        <div class="analysis-item">
-                            <span>🎯</span>
-                            <span><strong>نوع السؤال:</strong> ${intentAr} (${confidence}%)</span>
-                        </div>
-                    `;
-                }
-                
-                if (result.confidence) {
-                    const confPercent = (result.confidence * 100).toFixed(1);
-                    const confClass = confPercent > 75 ? 'high' : confPercent > 60 ? 'medium' : 'low';
-                    content += `
-                        <div class="analysis-item">
-                            <span>📊</span>
-                            <span><strong>دقة النتيجة:</strong> <span class="confidence-badge ${confClass}">${confPercent}%</span></span>
-                        </div>
-                    `;
-                }
-                
-                if (result.processingTime) {
-                    content += `
-                        <div class="analysis-item">
-                            <span>⚡</span>
-                            <span><strong>زمن المعالجة:</strong> ${result.processingTime}ث</span>
-                        </div>
-                    `;
-                }
-                
                 content += `</div>`;
             }
             
@@ -557,65 +301,18 @@
             chatContainer.scrollTop = chatContainer.scrollHeight;
         }
 
-        function handleButtonClick(action, data, text) {
-            if (action === 'select') {
-                // المستخدم اختار خياراً
-                askQuestion((data + 1).toString());
-            } else if (action === 'link') {
-                // فتح رابط
-                window.open(data, '_blank');
-            } else if (action === 'show') {
-                // عرض قسم معين
-                askQuestion(`اعرض ${data}`);
-            } else if (action === 'search') {
-                // بحث عن شيء
-                askQuestion(data);
-            } else if (action === 'faq') {
-                // أسئلة شائعة
-                askQuestion('ما هي الأسئلة الشائعة؟');
-            }
-        }
-
-        function getIntentNameArabic(intentName) {
-            const mapping = {
-                'ACTIVITY_LICENSE': 'التراخيص',
-                'ACTIVITY_AUTHORITY': 'الجهات المختصة',
-                'ACTIVITY_LAW': 'القوانين',
-                'ACTIVITY_GUIDE': 'الأدلة الإرشادية',
-                'ACTIVITY_LOCATION': 'المواقع المناسبة',
-                'ACTIVITY_TECHNICAL': 'النقاط الفنية',
-                'ACTIVITY_DESCRIPTION': 'توصيف النشاط',
-                'INDUSTRIAL_ZONE': 'المناطق الصناعية',
-                'INDUSTRIAL_ZONE_AUTHORITY': 'جهة الولاية',
-                'INDUSTRIAL_ZONE_DECISION': 'قرار الإنشاء',
-                'INDUSTRIAL_ZONE_AREA': 'المساحة',
-                'DECISION104': 'القرار 104',
-                'DECISION104_SECTOR': 'قطاع القرار 104',
-                'GENERAL': 'عام'
-            };
-            return mapping[intentName] || intentName;
+        function selectOption(index) {
+            askQuestion((index + 1).toString());
         }
 
         function formatAnswer(text) {
             text = escapeHtml(text);
-            
-            // Headers
-            text = text.replace(/###\s+(.+)/g, '<div class="answer-header"><span class="answer-icon">📋</span><h3 class="answer-title">$1</h3></div>');
-            text = text.replace(/####\s+(.+)/g, '<h4 style="margin: 15px 0 10px 0; color: #1e40af; font-size: 1.1rem;">$1</h4>');
-            
-            // Bold
-            text = text.replace(/\*\*(.+?)\*\*/g, '<strong style="color: #1e40af;">$1</strong>');
-            
-            // Italic
-            text = text.replace(/\*(.+?)\*/g, '<em style="color: var(--text-secondary);">$1</em>');
-            
-            // Line breaks
+            text = text.replace(/###\s+(.+)/g, '<h3 style="margin: 15px 0 10px 0; color: #1e40af;">$1</h3>');
+            text = text.replace(/####\s+(.+)/g, '<h4 style="margin: 10px 0 8px 0;">$1</h4>');
+            text = text.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+            text = text.replace(/\*(.+?)\*/g, '<em>$1</em>');
             text = text.replace(/\n\n/g, '<br><br>');
             text = text.replace(/\n/g, '<br>');
-            
-            // Bullet points
-            text = text.replace(/^•\s+(.+)$/gm, '<div style="margin: 5px 0; padding-right: 20px;">• $1</div>');
-            
             return text;
         }
 
@@ -631,27 +328,6 @@
             sendQuery();
         }
 
-        function updateMemoryIndicator() {
-            const indicator = document.getElementById('memory-indicator');
-            const count = conversationHistory.length;
-            
-            if (count > 0) {
-                const lastResult = conversationHistory[conversationHistory.length - 1].result;
-                const intentAr = lastResult.intent?.primary ? getIntentNameArabic(lastResult.intent.primary.name) : 'غير محدد';
-                indicator.innerHTML = `💭 السياق: ${count}/10 محادثات | آخر موضوع: ${intentAr}`;
-                indicator.style.display = 'block';
-            } else {
-                indicator.style.display = 'none';
-            }
-        }
-
-        // Auto-resize textarea
-        document.getElementById('query-input')?.addEventListener('input', function() {
-            this.style.height = 'auto';
-            this.style.height = Math.min(this.scrollHeight, 150) + 'px';
-        });
-
-        // Enter to send, Shift+Enter for new line
         document.getElementById('query-input')?.addEventListener('keydown', function(e) {
             if (e.key === 'Enter' && !e.shiftKey) {
                 e.preventDefault();
@@ -661,4 +337,3 @@
     </script>
 </body>
 </html>
-
