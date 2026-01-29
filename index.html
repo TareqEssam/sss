@@ -5,6 +5,221 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>المستشار الخبير الذكي - الهيئة العامة للاستثمار المصرية</title>
     <link rel="stylesheet" href="style.css">
+    <style>
+        /* أنماط إضافية للأزرار التفاعلية */
+        .interactive-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin: 20px 0;
+        }
+        
+        .interactive-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 0.95rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+        }
+        
+        .interactive-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.5);
+        }
+        
+        .interactive-btn.option-btn {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        }
+        
+        .interactive-btn.link-btn {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        }
+        
+        .interactive-btn.action-btn {
+            background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+        }
+        
+        .related-questions {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 12px;
+            margin: 20px 0;
+            border-right: 4px solid #667eea;
+        }
+        
+        .related-questions h4 {
+            color: #667eea;
+            margin-bottom: 12px;
+            font-size: 1rem;
+        }
+        
+        .related-question {
+            background: white;
+            padding: 10px 15px;
+            margin: 8px 0;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 1px solid #e0e0e0;
+            font-size: 0.9rem;
+        }
+        
+        .related-question:hover {
+            background: #667eea;
+            color: white;
+            transform: translateX(-5px);
+        }
+        
+        .links-section {
+            background: linear-gradient(135deg, #e0f7fa 0%, #f1f8e9 100%);
+            padding: 15px;
+            border-radius: 12px;
+            margin: 15px 0;
+        }
+        
+        .link-item {
+            background: white;
+            padding: 12px 15px;
+            margin: 8px 0;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            text-decoration: none;
+            color: #1e40af;
+            font-weight: 600;
+            transition: all 0.2s;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .link-item:hover {
+            transform: translateX(-5px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+        }
+        
+        .link-icon {
+            font-size: 1.5rem;
+        }
+        
+        .selection-numbers {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin: 15px 0;
+        }
+        
+        .number-btn {
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 2px 6px rgba(102, 126, 234, 0.3);
+        }
+        
+        .number-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.5);
+        }
+        
+        .confidence-badge {
+            display: inline-block;
+            padding: 5px 12px;
+            border-radius: 15px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-right: 8px;
+        }
+        
+        .confidence-badge.high {
+            background: #d1fae5;
+            color: #065f46;
+        }
+        
+        .confidence-badge.medium {
+            background: #fef3c7;
+            color: #92400e;
+        }
+        
+        .confidence-badge.low {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+        
+        .typing-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+        
+        .typing-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #667eea;
+            animation: typing 1.4s infinite;
+        }
+        
+        .typing-dot:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+        
+        .typing-dot:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+        
+        @keyframes typing {
+            0%, 60%, 100% {
+                transform: translateY(0);
+                opacity: 0.7;
+            }
+            30% {
+                transform: translateY(-10px);
+                opacity: 1;
+            }
+        }
+        
+        .answer-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin: 15px 0;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+        
+        .answer-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 15px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+        
+        .answer-icon {
+            font-size: 2rem;
+        }
+        
+        .answer-title {
+            flex: 1;
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: #1e40af;
+        }
+    </style>
 </head>
 <body>
     <div class="container">
@@ -12,7 +227,7 @@
         <header class="header">
             <div class="logo">
                 <h1>🎯 المستشار الخبير الذكي</h1>
-                <p>مساعد ذكي متطور - الهيئة العامة للاستثمار</p>
+                <p>نظام ذكاء متطور - الهيئة العامة للاستثمار</p>
             </div>
             <div class="status">
                 <span id="status-indicator" class="status-loading">⏳ جاري التحميل...</span>
@@ -24,7 +239,7 @@
         <div class="chat-container" id="chat-container">
             <div class="welcome-message">
                 <h2>مرحباً بك في المستشار الخبير الذكي 🎓</h2>
-                <p>نظام ذكاء متقدم لفهم عميق ودقيق لاستفساراتك</p>
+                <p>نظام ذكاء متقدم يفهم أسئلتك ويوفر إجابات احترافية شاملة</p>
                 
                 <div style="margin: 20px 0; display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
                     <span class="intelligence-badge">
@@ -37,15 +252,21 @@
                     </span>
                     <span class="intelligence-badge">
                         <span>✨</span>
-                        <span>إجابات احترافية</span>
+                        <span>إجابات تفاعلية</span>
+                    </span>
+                    <span class="intelligence-badge">
+                        <span>💬</span>
+                        <span>أسئلة متتابعة</span>
                     </span>
                 </div>
                 
                 <ul>
                     <li>✅ التراخيص والجهات المختصة لكل نشاط</li>
-                    <li>📋 القوانين والأدلة الإرشادية</li>
-                    <li>🏭 المناطق الصناعية وقرارات الإنشاء</li>
+                    <li>📋 القوانين والأدلة الإرشادية مع الروابط</li>
+                    <li>🏭 المناطق الصناعية مع الخرائط</li>
                     <li>💰 حوافز القرار 104 وتصنيف القطاعات</li>
+                    <li>🔄 فهم الأسئلة المتتابعة والسياق</li>
+                    <li>🎛️ أزرار تفاعلية للاختيار السريع</li>
                 </ul>
                 
                 <p style="margin-top: 20px; color: #666;">جرّب أن تسأل أي سؤال 👇</p>
@@ -56,20 +277,23 @@
         <div class="input-container">
             <div class="quick-questions">
                 <button class="quick-btn" onclick="askQuestion('ما هي شروط ترخيص مصنع ملابس؟')">
-                    شروط ترخيص مصنع ملابس
+                    🏭 ترخيص مصنع ملابس
                 </button>
                 <button class="quick-btn" onclick="askQuestion('المناطق الصناعية في القاهرة')">
-                    المناطق الصناعية
+                    📍 المناطق الصناعية
                 </button>
                 <button class="quick-btn" onclick="askQuestion('هل صناعة الأدوية في القرار 104؟')">
-                    القرار 104
+                    💰 القرار 104
+                </button>
+                <button class="quick-btn" onclick="askQuestion('أين يمكن فتح مطعم؟')">
+                    🍽️ فتح مطعم
                 </button>
             </div>
             
             <div class="input-wrapper">
                 <textarea 
                     id="query-input" 
-                    placeholder="اكتب سؤالك هنا..."
+                    placeholder="اكتب سؤالك هنا... (أو اختر رقماً من الخيارات أعلاه)"
                     rows="1"
                 ></textarea>
                 <button id="send-btn" onclick="sendQuery()">
@@ -85,7 +309,7 @@
     <!-- Scripts -->
     <script src="loader.js"></script>
     <script src="intent-engine-v2.js"></script>
-    <script src="core-v5-expert.js"></script>
+    <script src="enhanced-expert-system.js"></script>
     
     <script>
         let conversationHistory = [];
@@ -104,9 +328,9 @@
                 
                 const totalVectors = DataLoader.getTotalVectors();
                 
-                statusIndicator.textContent = '✅ جاهز';
+                statusIndicator.textContent = '✅ جاهز للعمل';
                 statusIndicator.className = 'status-ready';
-                dbSize.textContent = `📊 ${totalVectors.toLocaleString('ar-EG')} عنصر`;
+                dbSize.textContent = `📊 ${totalVectors.toLocaleString('ar-EG')} عنصر في قاعدة البيانات`;
                 
                 console.log('✅ النظام جاهز للعمل');
                 
@@ -140,28 +364,26 @@
                 input.value = '';
                 input.style.height = 'auto';
 
-                // Show thinking message
-                const thinkingId = addMessage('assistant', 'جاري التفكير...', true);
+                // Show typing indicator
+                const thinkingId = addTypingIndicator();
 
-                // Process query
-                const result = await ExpertAssistant.processQuery(query);
+                // Process query with enhanced system
+                const result = await EnhancedExpertSystem.processQuery(query);
 
-                // Remove thinking message
+                // Remove typing indicator
                 document.getElementById(thinkingId)?.remove();
 
-                // Add assistant response
-                addMessage('assistant', result.answer, false, result, result.processingTime);
+                // Add assistant response with all features
+                addEnhancedMessage(result);
 
                 // Update conversation history
                 conversationHistory.push({
                     query: query,
-                    intent: result.intent,
-                    entities: result.entities,
-                    sources: result.results
+                    result: result
                 });
 
-                // Keep only last 5
-                if (conversationHistory.length > 5) {
+                // Keep only last 10
+                if (conversationHistory.length > 10) {
                     conversationHistory.shift();
                 }
 
@@ -178,7 +400,7 @@
             }
         }
 
-        function addMessage(type, content, isTemp = false, data = null, processingTime = null) {
+        function addMessage(type, content) {
             const chatContainer = document.getElementById('chat-container');
             
             // Remove welcome message on first interaction
@@ -187,95 +409,171 @@
                 welcome.remove();
             }
             
-            const messageId = `msg-${Date.now()}-${Math.random()}`;
             const messageDiv = document.createElement('div');
-            messageDiv.className = `message ${type}-message${isTemp ? ' thinking' : ''}`;
-            messageDiv.id = messageId;
+            messageDiv.className = `message ${type}-message`;
 
             if (type === 'user') {
                 messageDiv.innerHTML = `
                     <div class="message-content">${escapeHtml(content)}</div>
                 `;
-            } else if (type === 'assistant') {
-                let intelligenceHtml = '';
-                if (data && !isTemp) {
-                    intelligenceHtml = '<div class="analysis-panel">';
-                    
-                    if (data.intent && data.intent.primary) {
-                        const intentAr = getIntentNameArabic(data.intent.primary.name);
-                        const confidence = (data.intent.primary.confidence * 100).toFixed(0);
-                        intelligenceHtml += `
-                            <div class="analysis-item">
-                                <span>🎯</span>
-                                <span><strong>النية:</strong> ${intentAr} (${confidence}%)</span>
-                            </div>
-                        `;
-                    }
-                    
-                    if (data.confidence) {
-                        const confPercent = (data.confidence * 100).toFixed(1);
-                        intelligenceHtml += `
-                            <div class="analysis-item">
-                                <span>📊</span>
-                                <span><strong>دقة النتيجة:</strong> ${confPercent}%</span>
-                            </div>
-                        `;
-                    }
-                    
-                    if (processingTime) {
-                        intelligenceHtml += `
-                            <div class="analysis-item">
-                                <span>⚡</span>
-                                <span><strong>زمن المعالجة:</strong> ${processingTime}ث</span>
-                            </div>
-                        `;
-                    }
-                    
-                    if (data.entities && Object.keys(data.entities).length > 0) {
-                        const entitiesStr = Object.values(data.entities).flat().slice(0, 3).join('، ');
-                        intelligenceHtml += `
-                            <div class="analysis-item">
-                                <span>🏷️</span>
-                                <span><strong>الكيانات:</strong> ${escapeHtml(entitiesStr)}</span>
-                            </div>
-                        `;
-                    }
-                    
-                    intelligenceHtml += '</div>';
-                }
-
-                let sourcesHtml = '';
-                if (data && data.sources && data.sources.length > 0 && !isTemp) {
-                    sourcesHtml = '<div class="sources">';
-                    sourcesHtml += '<div class="sources-header">📚 المصادر المستخدمة:</div>';
-                    data.sources.slice(0, 3).forEach((src, idx) => {
-                        const confidence = (src.score * 100).toFixed(1);
-                        const confidenceClass = confidence > 75 ? 'high' : confidence > 60 ? 'medium' : 'low';
-                        sourcesHtml += `
-                            <div class="source-item">
-                                <span class="source-label">${idx + 1}.</span>
-                                <span class="source-text">${escapeHtml(src.text)}</span>
-                                <span class="confidence ${confidenceClass}">${confidence}%</span>
-                            </div>
-                        `;
-                    });
-                    sourcesHtml += '</div>';
-                }
-
-                messageDiv.innerHTML = `
-                    <div class="message-content">${formatAnswer(content)}</div>
-                    ${intelligenceHtml}
-                    ${sourcesHtml}
-                `;
-            } else {
+            } else if (type === 'system') {
                 messageDiv.className = 'message system-message';
                 messageDiv.innerHTML = `<div class="message-content">${escapeHtml(content)}</div>`;
             }
 
             chatContainer.appendChild(messageDiv);
             chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
 
+        function addTypingIndicator() {
+            const chatContainer = document.getElementById('chat-container');
+            const messageId = `typing-${Date.now()}`;
+            
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'message assistant-message';
+            messageDiv.id = messageId;
+            messageDiv.innerHTML = `
+                <div class="message-content">
+                    <div class="typing-indicator">
+                        <span class="typing-dot"></span>
+                        <span class="typing-dot"></span>
+                        <span class="typing-dot"></span>
+                    </div>
+                </div>
+            `;
+            
+            chatContainer.appendChild(messageDiv);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+            
             return messageId;
+        }
+
+        function addEnhancedMessage(result) {
+            const chatContainer = document.getElementById('chat-container');
+            
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'message assistant-message';
+
+            let content = `<div class="message-content">`;
+            
+            // Main answer
+            content += `<div class="answer-card">`;
+            content += formatAnswer(result.answer);
+            content += `</div>`;
+            
+            // Interactive buttons
+            if (result.interactiveButtons && result.interactiveButtons.length > 0) {
+                content += `<div class="interactive-buttons">`;
+                
+                result.interactiveButtons.forEach((btn, index) => {
+                    const btnClass = btn.action === 'select' ? 'option-btn' : 
+                                   btn.action === 'link' ? 'link-btn' : 'action-btn';
+                    content += `
+                        <button class="interactive-btn ${btnClass}" onclick="handleButtonClick('${btn.action}', ${JSON.stringify(btn.data).replace(/"/g, '&quot;')}, '${escapeHtml(btn.text)}')">
+                            ${escapeHtml(btn.text)}
+                        </button>
+                    `;
+                });
+                
+                content += `</div>`;
+            }
+            
+            // Links section
+            if (result.links && result.links.length > 0) {
+                content += `<div class="links-section">`;
+                content += `<h4 style="margin-bottom: 10px; color: #1e40af;">🔗 روابط مفيدة:</h4>`;
+                
+                result.links.forEach(link => {
+                    content += `
+                        <a href="${link.url}" target="_blank" class="link-item">
+                            <span class="link-icon">${link.icon}</span>
+                            <span>${escapeHtml(link.text)}</span>
+                            <span style="margin-right: auto;">↗️</span>
+                        </a>
+                    `;
+                });
+                
+                content += `</div>`;
+            }
+            
+            // Related questions
+            if (result.relatedQuestions && result.relatedQuestions.length > 0) {
+                content += `<div class="related-questions">`;
+                content += `<h4>❓ أسئلة ذات صلة:</h4>`;
+                
+                result.relatedQuestions.forEach(question => {
+                    content += `
+                        <div class="related-question" onclick="askQuestion('${escapeHtml(question)}')">
+                            ${escapeHtml(question)}
+                        </div>
+                    `;
+                });
+                
+                content += `</div>`;
+            }
+            
+            // Analysis panel
+            if (result.intent || result.confidence || result.processingTime) {
+                content += `<div class="analysis-panel">`;
+                
+                if (result.intent?.primary) {
+                    const intentAr = getIntentNameArabic(result.intent.primary.name);
+                    const confidence = (result.intent.primary.confidence * 100).toFixed(0);
+                    content += `
+                        <div class="analysis-item">
+                            <span>🎯</span>
+                            <span><strong>نوع السؤال:</strong> ${intentAr} (${confidence}%)</span>
+                        </div>
+                    `;
+                }
+                
+                if (result.confidence) {
+                    const confPercent = (result.confidence * 100).toFixed(1);
+                    const confClass = confPercent > 75 ? 'high' : confPercent > 60 ? 'medium' : 'low';
+                    content += `
+                        <div class="analysis-item">
+                            <span>📊</span>
+                            <span><strong>دقة النتيجة:</strong> <span class="confidence-badge ${confClass}">${confPercent}%</span></span>
+                        </div>
+                    `;
+                }
+                
+                if (result.processingTime) {
+                    content += `
+                        <div class="analysis-item">
+                            <span>⚡</span>
+                            <span><strong>زمن المعالجة:</strong> ${result.processingTime}ث</span>
+                        </div>
+                    `;
+                }
+                
+                content += `</div>`;
+            }
+            
+            content += `</div>`;
+            
+            messageDiv.innerHTML = content;
+            chatContainer.appendChild(messageDiv);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+
+        function handleButtonClick(action, data, text) {
+            if (action === 'select') {
+                // المستخدم اختار خياراً
+                askQuestion((data + 1).toString());
+            } else if (action === 'link') {
+                // فتح رابط
+                window.open(data, '_blank');
+            } else if (action === 'show') {
+                // عرض قسم معين
+                askQuestion(`اعرض ${data}`);
+            } else if (action === 'search') {
+                // بحث عن شيء
+                askQuestion(data);
+            } else if (action === 'faq') {
+                // أسئلة شائعة
+                askQuestion('ما هي الأسئلة الشائعة؟');
+            }
         }
 
         function getIntentNameArabic(intentName) {
@@ -291,7 +589,6 @@
                 'INDUSTRIAL_ZONE_AUTHORITY': 'جهة الولاية',
                 'INDUSTRIAL_ZONE_DECISION': 'قرار الإنشاء',
                 'INDUSTRIAL_ZONE_AREA': 'المساحة',
-                'INDUSTRIAL_ZONE_CHECK': 'التحقق من المنطقة',
                 'DECISION104': 'القرار 104',
                 'DECISION104_SECTOR': 'قطاع القرار 104',
                 'GENERAL': 'عام'
@@ -303,25 +600,27 @@
             text = escapeHtml(text);
             
             // Headers
-            text = text.replace(/###\s+(.+)/g, '<h3 style="margin: 15px 0 10px 0; color: var(--primary-color);">$1</h3>');
-            text = text.replace(/####\s+(.+)/g, '<h4 style="margin: 10px 0 8px 0; color: var(--text-primary);">$1</h4>');
+            text = text.replace(/###\s+(.+)/g, '<div class="answer-header"><span class="answer-icon">📋</span><h3 class="answer-title">$1</h3></div>');
+            text = text.replace(/####\s+(.+)/g, '<h4 style="margin: 15px 0 10px 0; color: #1e40af; font-size: 1.1rem;">$1</h4>');
             
             // Bold
-            text = text.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+            text = text.replace(/\*\*(.+?)\*\*/g, '<strong style="color: #1e40af;">$1</strong>');
             
             // Italic
             text = text.replace(/\*(.+?)\*/g, '<em style="color: var(--text-secondary);">$1</em>');
             
             // Line breaks
+            text = text.replace(/\n\n/g, '<br><br>');
             text = text.replace(/\n/g, '<br>');
             
             // Bullet points
-            text = text.replace(/^•\s+(.+)$/gm, '&nbsp;&nbsp;&nbsp;• $1');
+            text = text.replace(/^•\s+(.+)$/gm, '<div style="margin: 5px 0; padding-right: 20px;">• $1</div>');
             
             return text;
         }
 
         function escapeHtml(text) {
+            if (typeof text !== 'string') return '';
             const div = document.createElement('div');
             div.textContent = text;
             return div.innerHTML;
@@ -337,9 +636,9 @@
             const count = conversationHistory.length;
             
             if (count > 0) {
-                const lastIntent = conversationHistory[conversationHistory.length - 1].intent;
-                const intentAr = lastIntent?.primary ? getIntentNameArabic(lastIntent.primary.name) : 'غير محدد';
-                indicator.innerHTML = `💭 السياق: ${count}/5 محادثات | آخر موضوع: ${intentAr}`;
+                const lastResult = conversationHistory[conversationHistory.length - 1].result;
+                const intentAr = lastResult.intent?.primary ? getIntentNameArabic(lastResult.intent.primary.name) : 'غير محدد';
+                indicator.innerHTML = `💭 السياق: ${count}/10 محادثات | آخر موضوع: ${intentAr}`;
                 indicator.style.display = 'block';
             } else {
                 indicator.style.display = 'none';
@@ -360,45 +659,5 @@
             }
         });
     </script>
-    
-    <style>
-        .intelligence-badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 5px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 6px 14px;
-            border-radius: 20px;
-            font-size: 0.85rem;
-            font-weight: 600;
-        }
-
-        .analysis-panel {
-            background: #f8f9fa;
-            padding: 12px;
-            border-radius: 8px;
-            margin-top: 12px;
-            font-size: 0.9rem;
-            border-right: 3px solid #667eea;
-        }
-
-        .analysis-item {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            margin: 5px 0;
-            color: var(--text-secondary);
-        }
-
-        .message.thinking .message-content {
-            animation: pulse 1.5s ease-in-out infinite;
-        }
-
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.5; }
-        }
-    </style>
 </body>
 </html>
