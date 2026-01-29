@@ -462,21 +462,52 @@ const ExpertAssistant = (() => {
      * استخراج البيانات المنظمة
      */
     function extractStructuredData(result) {
-        const text = result.enrichedText || result.text;
+        const enrichedText = result.enrichedText || '';
+        const rawText = result.text || '';
+        const fullText = enrichedText + ' ' + rawText;
         
-        return {
-            licenses: extractSection(text, 'التراخيص:'),
-            authority: extractSection(text, 'جهة الولاية:') || extractSection(text, 'الجهة المختصة:'),
-            law: extractSection(text, 'السند التشريعي:') || extractSection(text, 'القانون:'),
-            guide: extractSection(text, 'الدليل الإرشادي:'),
-            location: extractSection(text, 'مواقع مزاولة النشاط:'),
-            technical: extractSection(text, 'النقاط الفنية:'),
-            governorate: extractSection(text, 'المحافظة:'),
-            dependency: extractSection(text, 'جهة الولاية:') || extractSection(text, 'التبعية:'),
-            area: extractSection(text, 'المساحة:'),
-            decision: extractSection(text, 'قرار الإنشاء:'),
-            sector: extractSector(text)
+        console.log(`📄 استخراج البيانات من: "${rawText}"`);
+        console.log(`📄 طول النص المعزز: ${enrichedText.length} حرف`);
+        
+        const extracted = {
+            licenses: extractSection(fullText, 'التراخيص:') || 
+                     extractSection(fullText, 'الترخيص:') ||
+                     extractSection(fullText, 'تراخيص:'),
+            authority: extractSection(fullText, 'الجهة المختصة:') || 
+                      extractSection(fullText, 'جهة الولاية:') ||
+                      extractSection(fullText, 'جهة الاختصاص:') ||
+                      extractSection(fullText, 'الجهة:'),
+            law: extractSection(fullText, 'السند التشريعي:') || 
+                extractSection(fullText, 'القانون:') ||
+                extractSection(fullText, 'التشريع:'),
+            guide: extractSection(fullText, 'الدليل الإرشادي:') ||
+                  extractSection(fullText, 'الدليل:'),
+            location: extractSection(fullText, 'مواقع مزاولة النشاط:') ||
+                     extractSection(fullText, 'المواقع:') ||
+                     extractSection(fullText, 'الموقع:'),
+            technical: extractSection(fullText, 'النقاط الفنية:') ||
+                      extractSection(fullText, 'الاشتراطات الفنية:') ||
+                      extractSection(fullText, 'المتطلبات الفنية:'),
+            governorate: extractSection(fullText, 'المحافظة:'),
+            dependency: extractSection(fullText, 'جهة الولاية:') || 
+                       extractSection(fullText, 'التبعية:'),
+            area: extractSection(fullText, 'المساحة:'),
+            decision: extractSection(fullText, 'قرار الإنشاء:') ||
+                     extractSection(fullText, 'القرار:'),
+            sector: extractSector(fullText),
+            fullEnrichedText: enrichedText
         };
+        
+        console.log(`✅ البيانات المستخرجة:`, {
+            hasLicenses: !!extracted.licenses,
+            hasAuthority: !!extracted.authority,
+            hasLaw: !!extracted.law,
+            hasGuide: !!extracted.guide,
+            hasLocation: !!extracted.location,
+            hasTechnical: !!extracted.technical
+        });
+        
+        return extracted;
     }
 
     /**
@@ -515,8 +546,25 @@ const ExpertAssistant = (() => {
                 answer += `#### 🏛️ الجهة المختصة:\n${extracted.authority}\n\n`;
                 hasContent = true;
             }
-            if (!extracted.licenses && !extracted.authority) {
-                answer += 'لم أجد معلومات محددة عن التراخيص المطلوبة.\n\n';
+            
+            // إذا لم نجد معلومات منظمة، اعرض النص الكامل
+            if (!hasContent && extracted.fullEnrichedText) {
+                answer += `#### 📄 المعلومات المتاحة:\n`;
+                const cleanText = extracted.fullEnrichedText
+                    .replace(/\s+/g, ' ')
+                    .trim();
+                if (cleanText.length > 0) {
+                    answer += cleanText + '\n\n';
+                    hasContent = true;
+                }
+            }
+            
+            if (!hasContent) {
+                answer += '⚠️ لم أجد معلومات تفصيلية عن التراخيص في قاعدة البيانات.\n\n';
+                answer += '**يُرجى:**\n';
+                answer += '• التواصل مع الجهة المختصة مباشرة\n';
+                answer += '• مراجعة الموقع الرسمي للهيئة\n';
+                answer += '• الاستفسار عن الإجراءات الحالية\n\n';
                 hasContent = true;
             }
         }
@@ -530,8 +578,22 @@ const ExpertAssistant = (() => {
                 if (extracted.licenses) {
                     answer += `#### 📜 التراخيص الصادرة:\n${extracted.licenses}\n\n`;
                 }
-            } else {
-                answer += 'لم أجد معلومات عن الجهة المختصة.\n\n';
+            }
+            
+            // عرض النص الكامل إذا لم نجد معلومات منظمة
+            if (!hasContent && extracted.fullEnrichedText) {
+                answer += `#### 📄 المعلومات المتاحة:\n`;
+                const cleanText = extracted.fullEnrichedText
+                    .replace(/\s+/g, ' ')
+                    .trim();
+                if (cleanText.length > 0) {
+                    answer += cleanText + '\n\n';
+                    hasContent = true;
+                }
+            }
+            
+            if (!hasContent) {
+                answer += '⚠️ لم أجد معلومات عن الجهة المختصة في قاعدة البيانات.\n\n';
                 hasContent = true;
             }
         }
@@ -541,8 +603,21 @@ const ExpertAssistant = (() => {
             if (extracted.law) {
                 answer += `#### ⚖️ السند التشريعي:\n${extracted.law}\n\n`;
                 hasContent = true;
-            } else {
-                answer += 'لم أجد معلومات عن السند التشريعي.\n\n';
+            }
+            
+            if (!hasContent && extracted.fullEnrichedText) {
+                answer += `#### 📄 المعلومات المتاحة:\n`;
+                const cleanText = extracted.fullEnrichedText
+                    .replace(/\s+/g, ' ')
+                    .trim();
+                if (cleanText.length > 0) {
+                    answer += cleanText + '\n\n';
+                    hasContent = true;
+                }
+            }
+            
+            if (!hasContent) {
+                answer += '⚠️ لم أجد معلومات عن السند التشريعي في قاعدة البيانات.\n\n';
                 hasContent = true;
             }
         }
@@ -552,8 +627,21 @@ const ExpertAssistant = (() => {
             if (extracted.location) {
                 answer += `#### 📍 مواقع مزاولة النشاط:\n${extracted.location}\n\n`;
                 hasContent = true;
-            } else {
-                answer += 'لم أجد معلومات محددة عن مواقع مزاولة النشاط.\n\n';
+            }
+            
+            if (!hasContent && extracted.fullEnrichedText) {
+                answer += `#### 📄 المعلومات المتاحة:\n`;
+                const cleanText = extracted.fullEnrichedText
+                    .replace(/\s+/g, ' ')
+                    .trim();
+                if (cleanText.length > 0) {
+                    answer += cleanText + '\n\n';
+                    hasContent = true;
+                }
+            }
+            
+            if (!hasContent) {
+                answer += '⚠️ لم أجد معلومات محددة عن مواقع مزاولة النشاط.\n\n';
                 hasContent = true;
             }
         }
@@ -563,46 +651,81 @@ const ExpertAssistant = (() => {
             if (extracted.technical) {
                 answer += `#### 🔧 النقاط الفنية:\n${extracted.technical}\n\n`;
                 hasContent = true;
-            } else {
-                answer += 'لم أجد معلومات محددة عن النقاط الفنية.\n\n';
+            }
+            
+            if (!hasContent && extracted.fullEnrichedText) {
+                answer += `#### 📄 المعلومات المتاحة:\n`;
+                const cleanText = extracted.fullEnrichedText
+                    .replace(/\s+/g, ' ')
+                    .trim();
+                if (cleanText.length > 0) {
+                    answer += cleanText + '\n\n';
+                    hasContent = true;
+                }
+            }
+            
+            if (!hasContent) {
+                answer += '⚠️ لم أجد معلومات محددة عن النقاط الفنية.\n\n';
                 hasContent = true;
             }
         }
         
         // إجابة شاملة - عرض كل المعلومات المتاحة
         else {
+            let infoAdded = false;
+            
             if (extracted.authority) {
                 answer += `🏛️ **الجهة المختصة:** ${extracted.authority}\n\n`;
-                hasContent = true;
+                infoAdded = true;
             }
             if (extracted.licenses) {
                 answer += `📜 **التراخيص:** ${extracted.licenses}\n\n`;
-                hasContent = true;
+                infoAdded = true;
             }
             if (extracted.law) {
                 answer += `⚖️ **السند التشريعي:** ${extracted.law}\n\n`;
-                hasContent = true;
+                infoAdded = true;
             }
             if (extracted.location) {
                 answer += `📍 **المواقع:** ${extracted.location}\n\n`;
-                hasContent = true;
+                infoAdded = true;
             }
             if (extracted.technical) {
                 answer += `🔧 **النقاط الفنية:** ${extracted.technical}\n\n`;
-                hasContent = true;
+                infoAdded = true;
             }
             if (extracted.guide) {
                 answer += `📖 **الدليل الإرشادي:** ${extracted.guide}\n\n`;
+                infoAdded = true;
+            }
+            
+            // إذا لم نجد أي معلومات منظمة، اعرض النص الكامل
+            if (!infoAdded && extracted.fullEnrichedText) {
+                answer += `#### 📄 المعلومات المتاحة:\n`;
+                const cleanText = extracted.fullEnrichedText
+                    .replace(/\s+/g, ' ')
+                    .trim();
+                if (cleanText.length > 0) {
+                    answer += cleanText + '\n\n';
+                    infoAdded = true;
+                }
+            }
+            
+            if (infoAdded) {
                 hasContent = true;
             }
         }
 
         // إذا لم يتم إضافة أي محتوى، أضف رسالة افتراضية
         if (!hasContent) {
-            answer += 'تم العثور على النشاط لكن المعلومات التفصيلية غير متوفرة حالياً.\n\n';
+            answer += '⚠️ تم العثور على النشاط لكن المعلومات التفصيلية غير متوفرة حالياً في قاعدة البيانات.\n\n';
+            answer += '**يُنصح بـ:**\n';
+            answer += '• التواصل مع الهيئة العامة للاستثمار\n';
+            answer += '• زيارة الموقع الرسمي\n';
+            answer += '• الاتصال بمركز خدمة المستثمرين\n\n';
         }
 
-        answer += '\n💡 *للمزيد من التفاصيل، اسأل عن جانب محدد (التراخيص، الجهات، القوانين، إلخ)*';
+        answer += '\n💡 *للمزيد من التفاصيل، يمكنك التواصل مع الجهة المختصة أو السؤال عن جانب محدد*';
 
         return answer;
     }
