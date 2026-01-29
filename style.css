@@ -436,4 +436,74 @@ body {
 
 .message.thinking .message-content {
     animation: pulse 1.5s ease-in-out infinite;
+
+}
+
+/* لوحة الذكاء */
+.intelligence-panel {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-radius: 10px;
+    margin: 10px;
+    padding: 15px;
+    display: none;
+}
+
+.intelligence-content {
+    margin-top: 10px;
+    font-size: 14px;
+}
+
+.intelligence-item {
+    background: rgba(255, 255, 255, 0.1);
+    padding: 8px;
+    margin: 5px 0;
+    border-radius: 5px;
+}
+
+/* شريط التوقع */
+.prediction-bar {
+    background: #f0f7ff;
+    border-right: 4px solid #4dabf7;
+    padding: 10px;
+    margin: 10px 0;
+    border-radius: 5px;
+}
+
+.predictions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 8px;
+}
+
+.prediction-btn {
+    background: white;
+    border: 1px solid #4dabf7;
+    color: #4dabf7;
+    padding: 6px 12px;
+    border-radius: 20px;
+    cursor: pointer;
+    font-size: 13px;
+    transition: all 0.3s;
+}
+
+.prediction-btn:hover {
+    background: #4dabf7;
+    color: white;
+}
+
+/* رسائل الذكاء */
+.smart-message {
+    border-left: 4px solid #51cf66;
+    background: #ebfbee;
+}
+
+.explanation {
+    font-size: 12px;
+    color: #666;
+    margin-top: 5px;
+    padding: 5px;
+    background: #f8f9fa;
+    border-radius: 3px;
 }
