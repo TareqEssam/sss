@@ -402,24 +402,60 @@ const ExpertAssistant = (() => {
         const topResult = results[0];
         const intentName = intent?.primary?.name || 'GENERAL';
 
+        console.log(`📝 توليد إجابة لـ: ${intentName}`);
+
         // استخراج المعلومات
         const extracted = extractStructuredData(topResult);
 
         // توليد الإجابة حسب نوع السؤال
+        let answer = '';
+        
         if (intentName.includes('INDUSTRIAL_ZONE')) {
-            return generateIndustrialZoneExpertAnswer(query, results, extracted, intent, queryNorm);
+            answer = await generateIndustrialZoneExpertAnswer(query, results, extracted, intent, queryNorm);
         }
-        
-        if (intentName.includes('DECISION104')) {
-            return generateDecision104ExpertAnswer(query, topResult, extracted, intent, queryNorm);
+        else if (intentName.includes('DECISION104')) {
+            answer = await generateDecision104ExpertAnswer(query, topResult, extracted, intent, queryNorm);
         }
-        
-        if (intentName.includes('ACTIVITY')) {
-            return generateActivityExpertAnswer(query, topResult, extracted, intent, queryNorm);
+        else if (intentName.includes('ACTIVITY')) {
+            answer = await generateActivityExpertAnswer(query, topResult, extracted, intent, queryNorm);
+        }
+        else {
+            // إجابة عامة ذكية
+            answer = await generateSmartGeneralAnswer(query, results, intent);
         }
 
-        // إجابة عامة ذكية
-        return generateSmartGeneralAnswer(query, results, intent);
+        // تأكد من وجود إجابة
+        if (!answer || answer.trim().length === 0) {
+            console.warn('⚠️ لم يتم توليد إجابة، استخدام الإجابة الافتراضية');
+            answer = generateFallbackAnswer(topResult, results, intent);
+        }
+
+        console.log(`✅ تم توليد إجابة بطول ${answer.length} حرف`);
+        return answer;
+    }
+
+    /**
+     * إجابة احتياطية عند فشل التوليد
+     */
+    function generateFallbackAnswer(topResult, results, intent) {
+        let answer = `### 📋 ${topResult.text}\n\n`;
+        
+        if (topResult.enrichedText) {
+            // استخراج أول 500 حرف من النص المعزز
+            const preview = topResult.enrichedText.substring(0, 500);
+            answer += preview + (topResult.enrichedText.length > 500 ? '...\n\n' : '\n\n');
+        }
+        
+        if (results.length > 1) {
+            answer += `\n**نتائج أخرى ذات صلة:**\n`;
+            results.slice(1, 4).forEach((r, idx) => {
+                answer += `${idx + 1}. ${r.text}\n`;
+            });
+        }
+        
+        answer += '\n💡 *جرب إعادة صياغة السؤال للحصول على معلومات أكثر تحديداً*';
+        
+        return answer;
     }
 
     /**
@@ -467,17 +503,21 @@ const ExpertAssistant = (() => {
         let answer = `### 📋 **${result.text}**\n\n`;
 
         const intentName = intent.primary?.name;
+        let hasContent = false;
 
         // سؤال عن التراخيص
         if (intentName === 'ACTIVITY_LICENSE' || queryNorm.includes('ترخيص') || queryNorm.includes('تراخيص')) {
             if (extracted.licenses) {
                 answer += `#### 📜 التراخيص المطلوبة:\n${extracted.licenses}\n\n`;
+                hasContent = true;
             }
             if (extracted.authority) {
                 answer += `#### 🏛️ الجهة المختصة:\n${extracted.authority}\n\n`;
+                hasContent = true;
             }
-            if (!extracted.licenses) {
+            if (!extracted.licenses && !extracted.authority) {
                 answer += 'لم أجد معلومات محددة عن التراخيص المطلوبة.\n\n';
+                hasContent = true;
             }
         }
         
@@ -485,12 +525,14 @@ const ExpertAssistant = (() => {
         else if (intentName === 'ACTIVITY_AUTHORITY' || queryNorm.includes('جهة') || queryNorm.includes('جهات')) {
             if (extracted.authority) {
                 answer += `#### 🏛️ الجهة المختصة:\n${extracted.authority}\n\n`;
+                hasContent = true;
                 
                 if (extracted.licenses) {
                     answer += `#### 📜 التراخيص الصادرة:\n${extracted.licenses}\n\n`;
                 }
             } else {
                 answer += 'لم أجد معلومات عن الجهة المختصة.\n\n';
+                hasContent = true;
             }
         }
         
@@ -498,8 +540,10 @@ const ExpertAssistant = (() => {
         else if (intentName === 'ACTIVITY_LAW' || queryNorm.includes('قانون') || queryNorm.includes('تشريع')) {
             if (extracted.law) {
                 answer += `#### ⚖️ السند التشريعي:\n${extracted.law}\n\n`;
+                hasContent = true;
             } else {
                 answer += 'لم أجد معلومات عن السند التشريعي.\n\n';
+                hasContent = true;
             }
         }
         
@@ -507,8 +551,10 @@ const ExpertAssistant = (() => {
         else if (intentName === 'ACTIVITY_LOCATION' || queryNorm.includes('موقع') || queryNorm.includes('مكان') || queryNorm.includes('اين')) {
             if (extracted.location) {
                 answer += `#### 📍 مواقع مزاولة النشاط:\n${extracted.location}\n\n`;
+                hasContent = true;
             } else {
                 answer += 'لم أجد معلومات محددة عن مواقع مزاولة النشاط.\n\n';
+                hasContent = true;
             }
         }
         
@@ -516,17 +562,44 @@ const ExpertAssistant = (() => {
         else if (intentName === 'ACTIVITY_TECHNICAL' || queryNorm.includes('فني') || queryNorm.includes('معاينة') || queryNorm.includes('مساحة')) {
             if (extracted.technical) {
                 answer += `#### 🔧 النقاط الفنية:\n${extracted.technical}\n\n`;
+                hasContent = true;
             } else {
                 answer += 'لم أجد معلومات محددة عن النقاط الفنية.\n\n';
+                hasContent = true;
             }
         }
         
-        // إجابة شاملة
+        // إجابة شاملة - عرض كل المعلومات المتاحة
         else {
-            if (extracted.authority) answer += `🏛️ **الجهة المختصة:** ${extracted.authority}\n\n`;
-            if (extracted.licenses) answer += `📜 **التراخيص:** ${extracted.licenses}\n\n`;
-            if (extracted.law) answer += `⚖️ **السند التشريعي:** ${extracted.law}\n\n`;
-            if (extracted.location) answer += `📍 **المواقع:** ${extracted.location}\n\n`;
+            if (extracted.authority) {
+                answer += `🏛️ **الجهة المختصة:** ${extracted.authority}\n\n`;
+                hasContent = true;
+            }
+            if (extracted.licenses) {
+                answer += `📜 **التراخيص:** ${extracted.licenses}\n\n`;
+                hasContent = true;
+            }
+            if (extracted.law) {
+                answer += `⚖️ **السند التشريعي:** ${extracted.law}\n\n`;
+                hasContent = true;
+            }
+            if (extracted.location) {
+                answer += `📍 **المواقع:** ${extracted.location}\n\n`;
+                hasContent = true;
+            }
+            if (extracted.technical) {
+                answer += `🔧 **النقاط الفنية:** ${extracted.technical}\n\n`;
+                hasContent = true;
+            }
+            if (extracted.guide) {
+                answer += `📖 **الدليل الإرشادي:** ${extracted.guide}\n\n`;
+                hasContent = true;
+            }
+        }
+
+        // إذا لم يتم إضافة أي محتوى، أضف رسالة افتراضية
+        if (!hasContent) {
+            answer += 'تم العثور على النشاط لكن المعلومات التفصيلية غير متوفرة حالياً.\n\n';
         }
 
         answer += '\n💡 *للمزيد من التفاصيل، اسأل عن جانب محدد (التراخيص، الجهات، القوانين، إلخ)*';
@@ -539,6 +612,8 @@ const ExpertAssistant = (() => {
      */
     async function generateIndustrialZoneExpertAnswer(query, results, extracted, intent, queryNorm) {
         let answer = '';
+        
+        console.log(`🏭 توليد إجابة للمناطق الصناعية، عدد النتائج: ${results.length}`);
 
         // سؤال تحقق (هل هذه منطقة صناعية؟)
         if (queryNorm.includes('هل')) {
@@ -605,6 +680,8 @@ const ExpertAssistant = (() => {
      */
     async function generateDecision104ExpertAnswer(query, result, extracted, intent, queryNorm) {
         let answer = '';
+        
+        console.log(`💰 توليد إجابة للقرار 104`);
 
         // سؤال تحقق (هل النشاط في القرار 104؟)
         if (queryNorm.includes('هل')) {
