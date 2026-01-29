@@ -5,105 +5,145 @@
 
 const IntentEngine = (() => {
     
-    // أنماط النوايا المحسّنة
+    // أنماط النوايا المحسّنة والذكية
     const INTENT_PATTERNS = {
         ACTIVITY_LICENSE: {
-            keywords: ['ترخيص', 'تراخيص', 'رخصة', 'تصريح', 'موافقة', 'سجل صناعي', 'رخصة تشغيل', 'إجراءات', 'خطوات'],
-            negativeKeywords: ['جهة', 'قانون', 'دليل', 'منطقة'],
-            patterns: [/ما\s+(?:هي|هو)\s+(?:التراخيص|الرخص|المتطلبات)/i],
-            weight: 1.0,
-            threshold: 0.60
+            keywords: ['ترخيص', 'تراخيص', 'رخصة', 'رخص', 'تصريح', 'موافقة', 'سجل صناعي', 'رخصة تشغيل', 'اجراءات', 'خطوات', 'متطلبات', 'مطلوب', 'شروط'],
+            strongKeywords: ['ترخيص', 'تراخيص', 'رخصة'],
+            negativeKeywords: [],
+            patterns: [
+                /ما\s+(?:هي|هو)\s+(?:التراخيص|الرخص|المتطلبات|الشروط)/i,
+                /(?:تراخيص|رخص|متطلبات)\s+(?:انشاء|تشغيل|فتح|بدء)/i,
+                /كيف\s+(?:احصل|نحصل)\s+(?:على|علي)\s+(?:ترخيص|رخصة)/i
+            ],
+            weight: 1.2,
+            threshold: 0.35
         },
         ACTIVITY_AUTHORITY: {
-            keywords: ['جهة', 'جهات', 'هيئة', 'وزارة', 'مصلحة', 'إصدار', 'مختص', 'المسؤول', 'المختصة'],
-            negativeKeywords: ['ترخيص', 'قانون'],
-            patterns: [/من\s+(?:الجهة|المسؤول|المختص)/i, /أي\s+جهة/i],
-            weight: 1.0,
-            threshold: 0.60
+            keywords: ['جهة', 'جهات', 'هيئة', 'وزارة', 'مصلحة', 'اصدار', 'مختص', 'مسؤول', 'المختصة', 'ولاية', 'تبعية'],
+            strongKeywords: ['جهة', 'جهات', 'ولاية'],
+            negativeKeywords: [],
+            patterns: [
+                /(?:من|ما|اي)\s+(?:هي|هو)?\s*(?:الجهة|الجهات)/i,
+                /(?:جهة|جهات)\s+(?:الولاية|المختصة|المسؤولة)/i,
+                /(?:اي|من)\s+(?:جهة|هيئة|وزارة)/i
+            ],
+            weight: 1.2,
+            threshold: 0.35
         },
         ACTIVITY_LAW: {
-            keywords: ['قانون', 'قوانين', 'تشريع', 'لائحة', 'قرار', 'سند تشريعي', 'سند قانوني', 'التشريع'],
-            negativeKeywords: ['دليل', 'إجراءات'],
-            patterns: [/ما\s+(?:هو|القانون|التشريع)/i],
+            keywords: ['قانون', 'قوانين', 'تشريع', 'لايحة', 'قرار', 'سند تشريعي', 'سند قانوني', 'التشريع', 'نص قانوني'],
+            strongKeywords: ['قانون', 'قوانين', 'تشريع'],
+            negativeKeywords: [],
+            patterns: [/ما\s+(?:هو|القانون|التشريع|السند)/i],
             weight: 1.0,
-            threshold: 0.65
+            threshold: 0.40
         },
         ACTIVITY_GUIDE: {
-            keywords: ['دليل', 'أدلة', 'إرشادات', 'خطوات', 'كيف', 'طريقة'],
-            negativeKeywords: ['قانون', 'جهة'],
-            patterns: [/كيف\s+(?:أحصل|نحصل|يمكن)/i],
+            keywords: ['دليل', 'ادلة', 'ارشادات', 'خطوات', 'كيف', 'طريقة', 'كيفية'],
+            strongKeywords: ['دليل', 'ارشادات'],
+            negativeKeywords: [],
+            patterns: [/كيف\s+(?:احصل|نحصل|يمكن|استطيع)/i],
             weight: 1.0,
-            threshold: 0.60
+            threshold: 0.40
         },
         ACTIVITY_LOCATION: {
-            keywords: ['موقع', 'مكان', 'منطقة', 'أين', 'مواقع', 'أماكن', 'ممارسة النشاط', 'مزاولة'],
-            negativeKeywords: ['قرار', 'إنشاء'],
-            patterns: [/أين\s+(?:يمكن|أستطيع|نستطيع)/i, /في\s+أي\s+(?:مكان|منطقة)/i],
+            keywords: ['موقع', 'مكان', 'اين', 'مواقع', 'اماكن', 'ممارسة النشاط', 'مزاولة'],
+            strongKeywords: ['موقع', 'اين', 'مكان'],
+            negativeKeywords: [],
+            patterns: [
+                /اين\s+(?:يمكن|استطيع|نستطيع|اقدر)/i,
+                /في\s+اي\s+(?:مكان|منطقة|محافظة)/i
+            ],
             weight: 1.0,
-            threshold: 0.60
+            threshold: 0.40
         },
         ACTIVITY_TECHNICAL: {
-            keywords: ['فني', 'معاينة', 'نقاط فنية', 'اشتراطات', 'متطلبات فنية', 'فحص', 'تقنية', 'اشتراطات فنية'],
+            keywords: ['فني', 'معاينة', 'نقاط فنية', 'اشتراطات', 'متطلبات فنية', 'فحص', 'تقنية', 'اشتراطات فنية', 'مساحة', 'مقاس', 'ابعاد', 'مواصفات'],
+            strongKeywords: ['فني', 'معاينة', 'نقاط فنية', 'مساحة'],
             negativeKeywords: [],
-            patterns: [/(?:النقاط|الاشتراطات)\s+الفنية/i],
-            weight: 1.0,
-            threshold: 0.60
+            patterns: [
+                /(?:النقاط|الاشتراطات)\s+الفنية/i,
+                /(?:مساحة|ابعاد|مقاس)\s+(?:المخزن|المكان|المصنع)/i,
+                /كم\s+(?:مساحة|المساحة|حجم)/i
+            ],
+            weight: 1.1,
+            threshold: 0.35
         },
         ACTIVITY_DESCRIPTION: {
-            keywords: ['توصيف', 'وصف', 'ما هو', 'تعريف', 'شرح', 'معنى'],
-            negativeKeywords: ['ترخيص', 'جهة', 'قانون'],
-            patterns: [/ما\s+(?:هو|معنى|تعريف)/i],
-            weight: 1.0,
-            threshold: 0.60
+            keywords: ['توصيف', 'وصف', 'ما هو', 'تعريف', 'شرح', 'معني'],
+            strongKeywords: ['توصيف', 'تعريف'],
+            negativeKeywords: [],
+            patterns: [/ما\s+(?:هو|معني|تعريف)/i],
+            weight: 0.9,
+            threshold: 0.45
         },
         INDUSTRIAL_ZONE: {
-            keywords: ['منطقة صناعية', 'مناطق صناعية', 'صناعية', 'المناطق الصناعية'],
+            keywords: ['منطقة صناعية', 'مناطق صناعية', 'صناعية', 'المناطق الصناعية', 'صناعيه'],
+            strongKeywords: ['منطقة صناعية', 'مناطق صناعية'],
             negativeKeywords: [],
-            patterns: [/(?:المناطق|مناطق)\s+(?:الصناعية|صناعية)/i],
-            weight: 1.2,
-            threshold: 0.65
+            patterns: [
+                /(?:المناطق|مناطق)\s+(?:الصناعية|صناعية|صناعيه)/i,
+                /كم\s+عدد\s+(?:المناطق|مناطق)/i
+            ],
+            weight: 1.3,
+            threshold: 0.35
         },
         INDUSTRIAL_ZONE_AUTHORITY: {
-            keywords: ['تبعية', 'جهة الولاية', 'ولاية', 'مسؤول عن المنطقة', 'إدارة المنطقة'],
+            keywords: ['تبعية', 'جهة الولاية', 'جهات الولاية', 'ولاية', 'ولايه', 'مسؤول عن المنطقة', 'ادارة المنطقة'],
+            strongKeywords: ['تبعية', 'جهة الولاية', 'جهات الولاية', 'ولاية'],
             negativeKeywords: [],
-            patterns: [/(?:تبعية|جهة)\s+(?:المنطقة|الولاية)/i],
-            weight: 1.0,
-            threshold: 0.65
+            patterns: [
+                /(?:تبعية|جهة|جهات)\s+(?:المنطقة|الولاية|الولايه)/i,
+                /(?:ولاية|ولايه)\s+(?:المناطق|المنطقة)/i
+            ],
+            weight: 1.2,
+            threshold: 0.35
         },
         INDUSTRIAL_ZONE_DECISION: {
-            keywords: ['قرار إنشاء', 'قرار', 'إنشاء المنطقة', 'تأسيس'],
+            keywords: ['قرار انشاء', 'قرار', 'انشاء المنطقة', 'تاسيس'],
+            strongKeywords: ['قرار انشاء'],
             negativeKeywords: [],
-            patterns: [/قرار\s+(?:إنشاء|تأسيس)/i],
+            patterns: [/قرار\s+(?:انشاء|تاسيس)/i],
             weight: 1.0,
-            threshold: 0.65
+            threshold: 0.45
         },
         INDUSTRIAL_ZONE_AREA: {
             keywords: ['مساحة', 'حجم', 'كم فدان', 'المساحة', 'حجم المنطقة'],
+            strongKeywords: ['مساحة'],
             negativeKeywords: [],
             patterns: [/(?:مساحة|حجم)\s+(?:المنطقة)?/i],
             weight: 1.0,
-            threshold: 0.65
+            threshold: 0.45
         },
         INDUSTRIAL_ZONE_CHECK: {
-            keywords: ['هل', 'معتمد', 'معتمدة', 'منطقة صناعية؟'],
+            keywords: ['هل', 'معتمد', 'معتمدة', 'منطقة صناعية'],
+            strongKeywords: ['معتمد', 'معتمدة'],
             negativeKeywords: [],
             patterns: [/هل\s+.*\s+منطقة\s+صناعية/i],
             weight: 1.0,
-            threshold: 0.70
+            threshold: 0.50
         },
         DECISION104: {
-            keywords: ['قرار 104', 'القرار 104', 'حافز', 'حوافز', 'إعفاء', 'في القرار'],
+            keywords: ['قرار 104', 'القرار 104', 'حافز', 'حوافز', 'اعفاء', 'في القرار', 'ضمن قرار', 'يحصل', 'حوافز'],
+            strongKeywords: ['قرار 104', 'القرار 104', 'حوافز'],
             negativeKeywords: [],
-            patterns: [/(?:القرار|قرار)\s*104/i, /في\s+القرار/i],
-            weight: 1.2,
-            threshold: 0.65
+            patterns: [
+                /(?:القرار|قرار)\s*104/i,
+                /(?:في|ضمن|علي|على)\s+(?:القرار|قرار)/i,
+                /(?:يحصل|تحصل)\s+(?:على|علي)\s+حوافز/i,
+                /هل\s+.*\s+(?:في|ضمن)\s+(?:القرار|قرار)/i
+            ],
+            weight: 1.5,
+            threshold: 0.30
         },
         DECISION104_SECTOR: {
-            keywords: ['قطاع', 'قطاع أ', 'قطاع ب', 'أي قطاع', 'القطاعات'],
+            keywords: ['قطاع', 'قطاع ا', 'قطاع ب', 'اي قطاع', 'القطاعات'],
+            strongKeywords: ['قطاع'],
             negativeKeywords: [],
-            patterns: [/قطاع\s*[أب]/i],
+            patterns: [/قطاع\s*[اب]/i],
             weight: 1.0,
-            threshold: 0.65
+            threshold: 0.45
         }
     };
 
@@ -151,9 +191,10 @@ const IntentEngine = (() => {
             .replace(/[ًٌٍَُِّْ]/g, '')           // إزالة التشكيل
             .replace(/[أإآ]/g, 'ا')               // توحيد الألف
             .replace(/ى/g, 'ي')                   // توحيد الياء
-            .replace(/ة/g, 'ه')                   // توحيد التاء المربوطة
+            // .replace(/ة/g, 'ه')                // NOT REMOVING ة - مهم للبحث
             .replace(/[ؤئ]/g, 'ء')               // توحيد الهمزة
             .replace(/\s+/g, ' ')                 // توحيد المسافات
+            .toLowerCase()                        // تحويل للأحرف الصغيرة
             .trim();
     }
 
@@ -248,7 +289,8 @@ const IntentEngine = (() => {
         const intents = [];
 
         console.log(`🔍 تحليل: "${query}"`);
-
+        console.log(`📝 نص مطبع: "${normalized}"`);
+        
         // فحص كل نمط من أنماط النوايا
         for (const [intentName, pattern] of Object.entries(INTENT_PATTERNS)) {
             let score = 0;
@@ -267,44 +309,75 @@ const IntentEngine = (() => {
             }
 
             // فحص الكلمات المفتاحية
+            let strongKeywordMatches = 0;
+            let regularKeywordMatches = 0;
+            
             pattern.keywords.forEach(keyword => {
                 const keywordNorm = normalizeArabic(keyword);
                 if (normalized.includes(keywordNorm)) {
-                    score += 0.3 * pattern.weight;
+                    // تحقق إذا كانت كلمة قوية
+                    if (pattern.strongKeywords && pattern.strongKeywords.includes(keyword)) {
+                        score += 0.5 * pattern.weight;
+                        strongKeywordMatches++;
+                    } else {
+                        score += 0.25 * pattern.weight;
+                        regularKeywordMatches++;
+                    }
                     matchedKeywords.push(keyword);
                 }
             });
 
             // فحص الكلمات السلبية (تقلل الثقة)
-            if (pattern.negativeKeywords) {
+            if (pattern.negativeKeywords && pattern.negativeKeywords.length > 0) {
                 pattern.negativeKeywords.forEach(negKeyword => {
                     const negKeywordNorm = normalizeArabic(negKeyword);
                     if (normalized.includes(negKeywordNorm)) {
                         negativeMatches++;
-                        score -= 0.15;
+                        score -= 0.2;
                     }
                 });
             }
 
             // مكافأة تطابق الكيانات
             let entityBonus = 0;
-            if (intentName.startsWith('ACTIVITY') && entities.activities) {
-                entityBonus += 0.1;
+            if (intentName.startsWith('ACTIVITY') && entities.activities && entities.activities.length > 0) {
+                entityBonus += 0.2;
             }
-            if (intentName.startsWith('INDUSTRIAL_ZONE') && entities.zones) {
-                entityBonus += 0.15;
+            if (intentName.startsWith('INDUSTRIAL_ZONE') && (entities.zones || entities.governorates)) {
+                entityBonus += 0.25;
             }
             if (intentName.startsWith('DECISION104') && entities.decisions) {
-                entityBonus += 0.15;
+                entityBonus += 0.3;
             }
             score += entityBonus;
 
-            // حساب الثقة النهائية
-            const maxScore = (pattern.patterns?.length || 0) * 0.5 * pattern.weight +
-                           pattern.keywords.length * 0.3 * pattern.weight +
-                           0.25; // مكافأة الكيانات
+            // حساب الثقة النهائية - نظام مبسط
+            let confidence = 0;
             
-            const confidence = maxScore > 0 ? Math.min(1.0, score / maxScore) : 0;
+            // إذا تطابق pattern
+            if (matchedPatterns.length > 0) {
+                confidence = 0.7 + (strongKeywordMatches * 0.1) + (regularKeywordMatches * 0.05);
+            }
+            // إذا تطابقت كلمات قوية
+            else if (strongKeywordMatches >= 1) {
+                confidence = 0.6 + (strongKeywordMatches * 0.15) + (regularKeywordMatches * 0.05);
+            }
+            // إذا تطابقت كلمات عادية
+            else if (regularKeywordMatches >= 2) {
+                confidence = 0.5 + (regularKeywordMatches * 0.1);
+            }
+            else if (regularKeywordMatches >= 1) {
+                confidence = 0.4 + (regularKeywordMatches * 0.1);
+            }
+            
+            // إضافة مكافأة الكيانات
+            confidence += entityBonus;
+            
+            // خصم الكلمات السلبية
+            confidence -= (negativeMatches * 0.15);
+            
+            // تطبيق وزن النية
+            confidence = Math.min(1.0, confidence * pattern.weight);
 
             if (confidence >= pattern.threshold) {
                 intents.push({
@@ -314,8 +387,15 @@ const IntentEngine = (() => {
                     matchedPatterns,
                     negativeMatches,
                     threshold: pattern.threshold,
-                    rawScore: score
+                    rawScore: score,
+                    strongKeywordMatches,
+                    regularKeywordMatches
                 });
+                
+                console.log(`  ✓ ${intentName}: ${(confidence * 100).toFixed(0)}% (عتبة: ${(pattern.threshold * 100).toFixed(0)}%)`);
+                if (matchedKeywords.length > 0) {
+                    console.log(`    كلمات: ${matchedKeywords.join(', ')}`);
+                }
             }
         }
 
