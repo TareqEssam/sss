@@ -765,10 +765,29 @@ const ExpertAssistant = (() => {
     }
 
     /**
+     * دالة متوافقة مع الواجهة القديمة
+     */
+    async function answer(query, history = []) {
+        // معالجة السؤال
+        const answerText = await processQuery(query);
+        
+        // إرجاع بنفس التنسيق المتوقع من الواجهة
+        return {
+            answer: answerText,
+            intent: conversationContext.lastIntent,
+            entities: conversationContext.lastEntities,
+            confidence: conversationContext.lastResults?.[0]?.score || 0,
+            hasAmbiguity: false, // يمكن تحسينها لاحقاً
+            sources: conversationContext.lastResults?.slice(0, 3) || []
+        };
+    }
+
+    /**
      * الواجهة العامة للنظام
      */
     return {
         processQuery: processQuery,
+        answer: answer, // الدالة المتوافقة
         clearContext: () => {
             conversationContext = {
                 lastQuery: null,
