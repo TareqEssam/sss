@@ -279,26 +279,56 @@ const EnhancedExpertSystem = (() => {
      * استخراج النص للعرض
      */
     function extractDisplayText(item) {
-        if (item.original_data?.text_preview) {
-            return item.original_data.text_preview.substring(0, 200);
+        try {
+            // محاولة استخراج النص من مواقع مختلفة
+            if (item.original_data) {
+                if (item.original_data.text_preview) {
+                    const preview = item.original_data.text_preview.trim();
+                    return preview.substring(0, 200);
+                }
+                if (item.original_data.text) {
+                    return item.original_data.text.substring(0, 200);
+                }
+            }
+            
+            if (item.text) {
+                return item.text.substring(0, 200);
+            }
+            
+            if (item.id) {
+                return item.id;
+            }
+            
+            return 'نص غير متوفر';
+        } catch (error) {
+            console.error('خطأ في استخراج النص:', error);
+            return 'نص غير متوفر';
         }
-        return item.text || item.id || 'نص غير متوفر';
     }
 
     /**
      * استخراج النص المعزز
      */
     function extractEnrichedText(item) {
-        if (!item.original_data) return '';
-        
-        let enriched = '';
-        const data = item.original_data;
-        
-        if (data.text_preview) {
-            enriched += data.text_preview + '\n\n';
+        try {
+            if (!item.original_data) return '';
+            
+            let enriched = '';
+            const data = item.original_data;
+            
+            if (data.text_preview) {
+                enriched += data.text_preview + '\n\n';
+            }
+            
+            if (data.text && data.text !== data.text_preview) {
+                enriched += data.text + '\n\n';
+            }
+            
+            return enriched;
+        } catch (error) {
+            console.error('خطأ في استخراج النص المعزز:', error);
+            return '';
         }
-        
-        return enriched;
     }
 
     /**
@@ -310,18 +340,37 @@ const EnhancedExpertSystem = (() => {
             return 'NO_RESULTS';
         }
         
+        // نتيجة واحدة فقط
+        if (searchResults.items.length === 1) {
+            return 'DETAILED_ANSWER';
+        }
+        
+        // التحقق من مدى التشابه بين النتائج
+        const topResults = searchResults.items.slice(0, 5);
+        const hasMultipleSimilar = topResults.length > 1 && 
+                                  (topResults[0].similarity - topResults[1].similarity) < CONFIG.AMBIGUITY_SCORE_DIFF;
+        
+        // إذا كانت هناك نتائج متعددة متشابهة جداً
+        if (hasMultipleSimilar) {
+            // تحقق من نوع القاعدة - للأنشطة نعرض خيارات
+            const isActivities = topResults[0].dbType === 'activities';
+            if (isActivities && topResults.length >= 2) {
+                return 'MULTIPLE_OPTIONS';
+            }
+            return 'CLARIFICATION_NEEDED';
+        }
+        
         // نتيجة واحدة بثقة عالية
-        if (searchResults.items.length === 1 || 
-            searchResults.confidence > CONFIG.HIGH_CONFIDENCE) {
+        if (searchResults.confidence > CONFIG.HIGH_CONFIDENCE) {
             return 'DETAILED_ANSWER';
         }
         
         // سؤال غامض
-        if (analysis.isAmbiguous || searchResults.hasAmbiguity) {
+        if (analysis.isAmbiguous) {
             return 'CLARIFICATION_NEEDED';
         }
         
-        // نتائج متعددة
+        // نتائج متعددة بثقة متوسطة
         if (searchResults.items.length > 1) {
             return 'MULTIPLE_OPTIONS';
         }
@@ -333,29 +382,34 @@ const EnhancedExpertSystem = (() => {
      * توليد إجابة تطلب التوضيح
      */
     function generateClarificationResponse(searchResults, analysis) {
-        let answer = '🤔 **وجدت عدة احتمالات لسؤالك. هل تقصد:**\n\n';
+        let answer = '🤔 **وجدت عدة أنشطة متشابهة. أي منها تقصد؟**\n\n';
         
         const buttons = [];
         const topResults = searchResults.items.slice(0, 5);
         
         topResults.forEach((result, index) => {
             const displayText = extractDisplayText(result);
-            answer += `**${index + 1}.** ${displayText}\n\n`;
+            const confidence = (result.similarity * 100).toFixed(0);
+            
+            // عرض الخيار بشكل مختصر
+            const shortText = displayText.substring(0, 100);
+            answer += `**${index + 1}.** ${shortText}${displayText.length > 100 ? '...' : ''}\n`;
+            answer += `   *دقة المطابقة: ${confidence}%*\n\n`;
             
             buttons.push({
-                text: `${index + 1}. ${displayText.substring(0, 50)}...`,
+                text: `${index + 1}. ${shortText.substring(0, 40)}...`,
                 action: 'select',
                 data: index
             });
         });
         
-        answer += '\n💡 **اختر رقم الخيار المناسب أو أعد صياغة سؤالك بشكل أكثر تحديداً**';
+        answer += '\n💡 **اختر رقم النشاط المناسب بالنقر على الزر أو كتابة الرقم**';
         
         return {
             answer: answer,
             type: 'CLARIFICATION',
             buttons: buttons,
-            relatedQuestions: generateRelatedQuestions(topResults)
+            relatedQuestions: []
         };
     }
 
@@ -365,7 +419,7 @@ const EnhancedExpertSystem = (() => {
     function generateOptionsResponse(searchResults, analysis) {
         const topResults = searchResults.items.slice(0, 5);
         
-        let answer = `### 📋 وجدت ${topResults.length} نتيجة ذات صلة:\n\n`;
+        let answer = `### 📋 وجدت **${topResults.length}** ${topResults.length === 1 ? 'نتيجة' : 'نتائج'} ذات صلة بسؤالك:\n\n`;
         
         const buttons = [];
         
@@ -373,23 +427,28 @@ const EnhancedExpertSystem = (() => {
             const displayText = extractDisplayText(result);
             const confidence = (result.similarity * 100).toFixed(0);
             
-            answer += `#### ${index + 1}. ${displayText}\n`;
-            answer += `*دقة المطابقة: ${confidence}%*\n\n`;
+            // عرض مختصر للنشاط
+            const shortDisplay = displayText.length > 120 ? displayText.substring(0, 120) + '...' : displayText;
             
+            answer += `#### **${index + 1}.** ${shortDisplay}\n`;
+            answer += `<span class="confidence-badge ${confidence > 75 ? 'high' : confidence > 60 ? 'medium' : 'low'}">دقة: ${confidence}%</span>\n\n`;
+            
+            // زر للعرض التفصيلي
+            const btnText = displayText.length > 45 ? displayText.substring(0, 45) + '...' : displayText;
             buttons.push({
-                text: `${index + 1}. عرض التفاصيل`,
+                text: `${index + 1}. ${btnText}`,
                 action: 'select',
                 data: index
             });
         });
         
-        answer += '\n\n💡 **اختر رقم النتيجة لعرض التفاصيل الكاملة**';
+        answer += '\n\n💡 **اختر رقم النتيجة بالنقر على الزر أو كتابة الرقم لعرض التفاصيل الكاملة**';
         
         return {
             answer: answer,
             type: 'MULTIPLE_OPTIONS',
             buttons: buttons,
-            relatedQuestions: generateRelatedQuestions(topResults)
+            relatedQuestions: []
         };
     }
 
@@ -397,6 +456,17 @@ const EnhancedExpertSystem = (() => {
      * توليد إجابة تفصيلية
      */
     function generateDetailedResponse(searchResults, analysis) {
+        // التحقق من وجود نتائج
+        if (!searchResults || !searchResults.items || searchResults.items.length === 0) {
+            return {
+                answer: '⚠️ لم أجد معلومات متطابقة مع سؤالك.\n\nيرجى:\n• إعادة صياغة السؤال\n• استخدام كلمات أخرى\n• تحديد التفاصيل أكثر',
+                type: 'NO_RESULTS',
+                buttons: [],
+                links: [],
+                relatedQuestions: []
+            };
+        }
+        
         const mainResult = searchResults.items[0];
         const dbType = mainResult.dbType;
         
@@ -415,78 +485,103 @@ const EnhancedExpertSystem = (() => {
      * إجابة تفصيلية للأنشطة
      */
     function generateActivityDetailedResponse(result, analysis) {
-        const data = result.original_data;
-        let answer = '';
-        
-        // العنوان
-        answer += `### 🏢 ${extractDisplayText(result)}\n\n`;
-        
-        // البيانات المنظمة
-        const sections = extractActivitySections(data);
-        const questionType = analysis.questionType;
-        
-        // عرض حسب نوع السؤال
-        if (questionType.LICENSE_QUESTION && sections.licenses) {
-            answer += `#### 📜 التراخيص المطلوبة:\n${sections.licenses}\n\n`;
+        try {
+            const data = result.original_data || {};
+            let answer = '';
+            
+            // العنوان
+            const title = extractDisplayText(result);
+            answer += `### 🏢 ${title}\n\n`;
+            
+            // البيانات المنظمة
+            const sections = extractActivitySections(data);
+            const questionType = analysis.questionType || {};
+            
+            // عرض حسب نوع السؤال
+            if (questionType.LICENSE_QUESTION && sections.licenses) {
+                answer += `#### 📜 التراخيص المطلوبة:\n${sections.licenses}\n\n`;
+            }
+            
+            if (questionType.AUTHORITY_QUESTION && sections.authority) {
+                answer += `#### 🏛️ الجهة المختصة:\n${sections.authority}\n\n`;
+            }
+            
+            if (questionType.LAW_QUESTION && sections.law) {
+                answer += `#### ⚖️ السند القانوني:\n${sections.law}\n\n`;
+            }
+            
+            if (questionType.LOCATION_QUESTION && sections.location) {
+                answer += `#### 📍 مواقع مزاولة النشاط:\n${sections.location}\n\n`;
+            }
+            
+            if (questionType.GUIDE_QUESTION && sections.guide) {
+                answer += `#### 📖 الدليل الإرشادي:\n${sections.guide}\n\n`;
+            }
+            
+            if (questionType.TECHNICAL_QUESTION && sections.technical) {
+                answer += `#### 🔧 النقاط الفنية:\n${sections.technical}\n\n`;
+            }
+            
+            // إذا لم يكن هناك محتوى محدد، اعرض كل شيء
+            if (!answer.includes('####')) {
+                if (sections.licenses) answer += `#### 📜 التراخيص:\n${sections.licenses}\n\n`;
+                if (sections.authority) answer += `#### 🏛️ الجهة المختصة:\n${sections.authority}\n\n`;
+                if (sections.law) answer += `#### ⚖️ السند القانوني:\n${sections.law}\n\n`;
+                if (sections.location) answer += `#### 📍 المواقع:\n${sections.location}\n\n`;
+                if (sections.technical) {
+                    const formattedTech = formatTechnicalNotes(sections.technical);
+                    answer += `#### 🔧 النقاط الفنية:\n${formattedTech}\n\n`;
+                }
+            }
+            
+            // إذا لم يتم عرض أي محتوى، اعرض النص المعزز
+            if (!answer.includes('####')) {
+                const enriched = extractEnrichedText(result);
+                if (enriched) {
+                    answer += enriched;
+                } else {
+                    answer += 'المعلومات التفصيلية غير متوفرة حالياً.\n\n';
+                }
+            }
+            
+            // الروابط
+            const links = [];
+            if (sections.guideLink) {
+                links.push({
+                    text: '📘 الدليل الإرشادي الكامل',
+                    url: sections.guideLink,
+                    icon: '📘'
+                });
+            }
+            
+            // الأزرار التفاعلية
+            const buttons = generateActivityButtons(sections);
+            
+            // الأسئلة ذات الصلة
+            const relatedQuestions = [
+                'ما هي التراخيص المطلوبة؟',
+                'ما هي الجهة المختصة؟',
+                'ما هي الاشتراطات الفنية؟',
+                'أين يمكن مزاولة هذا النشاط؟'
+            ];
+            
+            return {
+                answer: answer,
+                type: 'DETAILED_ACTIVITY',
+                buttons: buttons,
+                links: links,
+                relatedQuestions: relatedQuestions
+            };
+        } catch (error) {
+            console.error('خطأ في توليد إجابة النشاط:', error);
+            return {
+                answer: `### 🏢 ${extractDisplayText(result)}\n\nحدث خطأ في عرض التفاصيل الكاملة. المعلومات الأساسية متوفرة في قاعدة البيانات.`,
+                type: 'DETAILED_ACTIVITY',
+                buttons: [],
+                links: [],
+                relatedQuestions: []
+            };
         }
-        
-        if (questionType.AUTHORITY_QUESTION && sections.authority) {
-            answer += `#### 🏛️ الجهة المختصة:\n${sections.authority}\n\n`;
-        }
-        
-        if (questionType.LAW_QUESTION && sections.law) {
-            answer += `#### ⚖️ السند القانوني:\n${sections.law}\n\n`;
-        }
-        
-        if (questionType.LOCATION_QUESTION && sections.location) {
-            answer += `#### 📍 مواقع مزاولة النشاط:\n${sections.location}\n\n`;
-        }
-        
-        if (questionType.GUIDE_QUESTION && sections.guide) {
-            answer += `#### 📖 الدليل الإرشادي:\n${sections.guide}\n\n`;
-        }
-        
-        if (questionType.TECHNICAL_QUESTION && sections.technical) {
-            answer += `#### 🔧 النقاط الفنية:\n${sections.technical}\n\n`;
-        }
-        
-        // إذا لم يكن هناك محتوى محدد، اعرض كل شيء
-        if (!answer.includes('####')) {
-            if (sections.licenses) answer += `#### 📜 التراخيص:\n${sections.licenses}\n\n`;
-            if (sections.authority) answer += `#### 🏛️ الجهة المختصة:\n${sections.authority}\n\n`;
-            if (sections.law) answer += `#### ⚖️ السند القانوني:\n${sections.law}\n\n`;
-            if (sections.location) answer += `#### 📍 المواقع:\n${sections.location}\n\n`;
-            if (sections.technical) answer += `#### 🔧 النقاط الفنية:\n${formatTechnicalNotes(sections.technical)}\n\n`;
-        }
-        
-        // الروابط
-        const links = [];
-        if (sections.guideLink) {
-            links.push({
-                text: '📘 الدليل الإرشادي الكامل',
-                url: sections.guideLink,
-                icon: '📘'
-            });
-        }
-        
-        // الأزرار التفاعلية
-        const buttons = generateActivityButtons(sections);
-        
-        // الأسئلة ذات الصلة
-        const relatedQuestions = [
-            'ما هي التراخيص المطلوبة؟',
-            'ما هي الجهة المختصة؟',
-            'ما هي الاشتراطات الفنية؟',
-            'أين يمكن مزاولة هذا النشاط؟'
-        ];
-        
-        return {
-            answer: answer,
-            type: 'DETAILED_ACTIVITY',
-            buttons: buttons,
-            links: links,
-            relatedQuestions: relatedQuestions
-        };
     }
 
     /**
