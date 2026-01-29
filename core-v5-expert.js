@@ -1,5 +1,5 @@
 /**
- * Expert Assistant Core v5 - المستشار الخبير الذكي المحسّن
+ * Expert Assistant Core v5 - المستشار الخبير  المحسّن
  * نظام ذكي متقدم يجيب على الأسئلة بدقة واحترافية كخبير حقيقي
  * مع إصلاح جميع الأخطاء وتحسين الأداء
  */
@@ -989,3 +989,4 @@ const ExpertAssistant = (() => {
         getContext: () => conversationContext
     };
 })();
+
