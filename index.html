@@ -274,7 +274,257 @@
                 sendQuery();
             }
         });
+        // ================ دوال الذكاء الإضافية ================
+
+        // عرض تحليل الذكاء
+        function displayIntelligenceAnalysis(result) {
+            const panel = document.getElementById('intelligence-content');
+            if (!panel) return;
+
+            let html = `
+                <div class="intelligence-item">
+                    <strong>النية المكتشفة:</strong> ${result.intent.name}
+                    <br><small>ثقة: ${(result.intent.confidence * 100).toFixed(0)}%</small>
+                </div>
+            `;
+
+            if (result.entities && result.entities.activities && result.entities.activities.length > 0) {
+                html += `
+                    <div class="intelligence-item">
+                        <strong>الأنشطة المحددة:</strong>
+                        ${result.entities.activities.map(a => a.name).join(', ')}
+                    </div>
+                `;
+            }
+
+            if (result.explanation) {
+                html += `
+                    <div class="intelligence-item">
+                        <strong>كيف فهمت السؤال:</strong>
+                        <br>${result.explanation}
+                    </div>
+                `;
+            }
+
+            panel.innerHTML = html;
+            document.getElementById('intelligence-panel').style.display = 'block';
+        }
+
+        // عرض توقعات الأسئلة
+        function displayPredictions(predictions) {
+            const container = document.getElementById('predictions');
+            if (!container) return;
+
+            if (!predictions || predictions.length === 0) {
+                container.innerHTML = '<span style="color: #666">لا توجد توقعات حالياً</span>';
+                return;
+            }
+
+            let html = '';
+            predictions.forEach((pred, idx) => {
+                html += `
+                    <button class="prediction-btn" onclick="askPrediction('${pred.replace(/'/g, "\\'")}')">
+                        ${pred}
+                    </button>
+                `;
+            });
+
+            container.innerHTML = html;
+        }
+
+        // دالة لطرح سؤال توقع
+        function askPrediction(question) {
+            document.getElementById('query-input').value = question;
+            sendQuery();
+        }
+
+        // تبديل عرض لوحة الذكاء
+        function toggleIntelligence() {
+            const content = document.getElementById('intelligence-content');
+            if (content.style.display === 'none') {
+                content.style.display = 'block';
+            } else {
+                content.style.display = 'none';
+            }
+        }
+
+        // تحديث دالة sendQuery لاستخدام الذكاء
+        async function sendQuery() {
+            const input = document.getElementById('query-input');
+            const query = input.value.trim();
+            
+            if (!query) return;
+
+            // إضافة رسالة المستخدم
+            addMessage('user', query);
+            input.value = '';
+            input.style.height = 'auto';
+
+            // إظهار مؤشر التفكير
+            const thinkingId = addMessage('assistant', '🧠 جاري التحليل الذكي...', true);
+
+            try {
+                // معالجة الاستعلام بالذكاء المحسن
+                const result = await ExpertAssistant.answer(query, conversationHistory);
+                
+                // إزالة مؤشر التفكير
+                document.getElementById(thinkingId)?.remove();
+
+                // إضافة رد المساعد مع الذكاء
+                const messageId = addMessage('assistant', result.answer, false, result);
+                
+                // إضافة شرح الذكاء إذا كان موجوداً
+                if (result.explanation) {
+                    const explanationDiv = document.createElement('div');
+                    explanationDiv.className = 'explanation';
+                    explanationDiv.innerHTML = `💡 ${result.explanation}`;
+                    document.getElementById(messageId)?.appendChild(explanationDiv);
+                }
+
+                // تحديث سجل المحادثة
+                conversationHistory.push({
+                    question: query,
+                    answer: result.answer,
+                    intent: result.intent,
+                    entities: result.entities,
+                    timestamp: Date.now()
+                });
+
+                // الاحتفاظ بآخر 5 تبادلات فقط
+                if (conversationHistory.length > 5) {
+                    conversationHistory = conversationHistory.slice(-5);
+                }
+
+                updateMemoryIndicator();
+
+                // عرض التوقعات وتحليل الذكاء
+                if (result.predictions) {
+                    displayPredictions(result.predictions);
+                }
+
+                if (result.intent && result.intent.name !== 'ERROR') {
+                    displayIntelligenceAnalysis(result);
+                }
+
+                // إظهار لوحة الذكاء تلقائياً
+                document.getElementById('intelligence-panel').style.display = 'block';
+
+            } catch (error) {
+                document.getElementById(thinkingId)?.remove();
+                addMessage('system', `⚠️ خطأ ذكي: ${error.message}`);
+            }
+        }
+
+        // تحسين دالة addMessage لدعم الرسائل الذكية
+        function addMessage(type, content, isTemp = false, data = null) {
+            const chatContainer = document.getElementById('chat-container');
+            const messageId = `msg-${Date.now()}-${Math.random()}`;
+            
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${type}-message ${data?.intent?.name?.startsWith('ACTIVITY') ? 'smart-message' : ''}`;
+            messageDiv.id = messageId;
+
+            if (type === 'user') {
+                messageDiv.innerHTML = `
+                    <div class="message-content">${escapeHtml(content)}</div>
+                    <div class="message-time">${new Date().toLocaleTimeString('ar-EG', {hour: '2-digit', minute:'2-digit'})}</div>
+                `;
+            } else if (type === 'assistant') {
+                let sourcesHtml = '';
+                if (data && data.sources && data.sources.length > 0) {
+                    sourcesHtml = '<div class="sources">';
+                    sourcesHtml += '<div class="sources-header">🧭 مصادر متعددة:</div>';
+                    data.sources.forEach((src, idx) => {
+                        const confidence = (src.relevance * 100).toFixed(0);
+                        const confidenceClass = confidence > 80 ? 'high' : confidence > 60 ? 'medium' : 'low';
+                        const sourceIcon = src.dataType === 'activities' ? '📋' : 
+                                         src.dataType === 'industrial' ? '🏭' : '💰';
+                        
+                        sourcesHtml += `
+                            <div class="source-item">
+                                <span class="source-label">${sourceIcon} ${idx + 1}.</span>
+                                <span class="source-text">${escapeHtml(src.text)}</span>
+                                <span class="source-type">${src.dataType}</span>
+                                <span class="confidence ${confidenceClass}">${confidence}%</span>
+                            </div>
+                        `;
+                    });
+                    sourcesHtml += '</div>';
+                }
+
+                messageDiv.innerHTML = `
+                    <div class="message-header">
+                        <span class="assistant-avatar">🤖</span>
+                        <span class="intent-badge" style="background: ${getIntentColor(data?.intent?.name)}">
+                            ${getIntentLabel(data?.intent?.name)}
+                        </span>
+                    </div>
+                    <div class="message-content">${formatAnswer(content)}</div>
+                    ${sourcesHtml}
+                    <div class="message-time">${new Date().toLocaleTimeString('ar-EG', {hour: '2-digit', minute:'2-digit'})}</div>
+                `;
+            } else {
+                messageDiv.className = 'message system-message';
+                messageDiv.innerHTML = `
+                    <div class="message-content">${escapeHtml(content)}</div>
+                    <div class="message-time">${new Date().toLocaleTimeString('ar-EG', {hour: '2-digit', minute:'2-digit'})}</div>
+                `;
+            }
+
+            chatContainer.appendChild(messageDiv);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+
+            return messageId;
+        }
+
+        // دالات مساعدة للذكاء
+        function getIntentColor(intentName) {
+            const colors = {
+                'ACTIVITY_LICENSE': '#51cf66',
+                'ACTIVITY_AUTHORITY': '#339af0',
+                'ACTIVITY_LAW': '#ff6b6b',
+                'INDUSTRIAL_ZONE_SEARCH': '#ff922b',
+                'DECISION104_CHECK': '#cc5de8',
+                'GENERAL': '#adb5bd'
+            };
+            return colors[intentName] || '#adb5bd';
+        }
+
+        function getIntentLabel(intentName) {
+            const labels = {
+                'ACTIVITY_LICENSE': 'تراخيص',
+                'ACTIVITY_AUTHORITY': 'جهات',
+                'ACTIVITY_LAW': 'قوانين',
+                'INDUSTRIAL_ZONE_SEARCH': 'مناطق صناعية',
+                'DECISION104_CHECK': 'قرار 104',
+                'GENERAL': 'عام'
+            };
+            return labels[intentName] || 'عام';
+        }
+
+        // تحسين دالة formatAnswer للإجابات الذكية
+        function formatAnswer(text) {
+            text = escapeHtml(text);
+            
+            // تحسين التنسيق للإجابات الذكية
+            text = text.replace(/^\*\*(.+?)\*\*\n/gm, '<strong class="answer-title">$1</strong><br>');
+            text = text.replace(/\n\n/g, '</div><div class="answer-section">');
+            text = text.replace(/\n/g, '<br>');
+            text = text.replace(/•/g, '• ');
+            text = text.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+            
+            return `<div class="answer-content"><div class="answer-section">${text}</div></div>`;
+        }
+
+        // تحسين escapeHtml
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML.replace(/"/g, '&quot;').replace(/'/g, '&#039;');
+        }
+        
     </script>
 </body>
 </html>
+
 
