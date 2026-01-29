@@ -67,7 +67,7 @@
     <!-- Scripts -->
     <script src="loader.js"></script>
     <script src="intent-engine.js"></script>
-    <script src="core.js"></script>
+    <script src="core-v2.js"></script>
     <script>
         let conversationHistory = [];
 
@@ -89,6 +89,9 @@
                 const startTime = Date.now();
                 await DataLoader.initialize();
                 const loadTime = ((Date.now() - startTime) / 1000).toFixed(2);
+
+                // Initialize embedding model
+                statusEl.textContent = '✅ جاري التجهيز...';
 
                 // Update UI
                 statusEl.textContent = '✅ جاهز للاستخدام';
