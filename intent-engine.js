@@ -1,338 +1,331 @@
-/**
- * Intent Engine - محرك فهم النية
- * يحلل الأسئلة ويستخرج الكيانات ويفهم السياق
- */
-
 const IntentEngine = (() => {
     
-    // Intent patterns
+    // Intent patterns معززة
     const INTENT_PATTERNS = {
+        // === الأنشطة ===
         ACTIVITY_LICENSE: {
-            keywords: ['ترخيص', 'تراخيص', 'رخصة', 'تصريح', 'موافقة', 'سجل صناعي', 'رخصة تشغيل'],
-            entities: ['نشاط', 'مصنع', 'شركة', 'مشروع'],
-            threshold: 0.65
+            keywords: ['ترخيص', 'تراخيص', 'رخصة', 'تصريح', 'موافقة', 'إجازة', 'تصريح تشغيل', 'سجل صناعي'],
+            vectors: ['رخصة', 'ترخيص', 'تصريح'], // كلمات مميزة في vectors
+            threshold: 0.70,
+            dataType: 'activities'
         },
         ACTIVITY_AUTHORITY: {
-            keywords: ['جهة', 'جهات', 'هيئة', 'وزارة', 'مصلحة', 'إصدار', 'مختص', 'المسؤول'],
-            entities: ['نشاط'],
-            threshold: 0.65
+            keywords: ['جهة', 'جهات', 'هيئة', 'وزارة', 'مصلحة', 'مختص', 'مسؤول', 'إصدار', 'إدارة'],
+            vectors: ['جهة', 'هيئة', 'وزارة'],
+            threshold: 0.70,
+            dataType: 'activities'
         },
         ACTIVITY_LAW: {
-            keywords: ['قانون', 'قوانين', 'تشريع', 'لائحة', 'قرار', 'سند تشريعي', 'سند قانوني'],
-            entities: ['نشاط'],
-            threshold: 0.70
+            keywords: ['قانون', 'قوانين', 'تشريع', 'لائحة', 'سند تشريعي', 'سند قانوني', 'مادة', 'بند'],
+            vectors: ['قانون', 'تشريع', 'لائحة'],
+            threshold: 0.75,
+            dataType: 'activities'
         },
-        ACTIVITY_GUIDE: {
-            keywords: ['دليل', 'أدلة', 'إرشادات', 'خطوات', 'إجراءات'],
-            entities: ['نشاط'],
-            threshold: 0.65
-        },
-        ACTIVITY_LOCATION: {
-            keywords: ['موقع', 'مكان', 'منطقة', 'أين', 'مواقع', 'أماكن'],
-            entities: ['نشاط', 'ممارسة'],
-            threshold: 0.65
-        },
-        ACTIVITY_TECHNICAL: {
-            keywords: ['فني', 'معاينة', 'نقاط فنية', 'اشتراطات', 'متطلبات فنية', 'فحص'],
-            entities: ['نشاط', 'شركة', 'مصنع'],
-            threshold: 0.65
-        },
-        ACTIVITY_DESCRIPTION: {
-            keywords: ['توصيف', 'وصف', 'ما هو', 'تعريف', 'شرح'],
-            entities: ['نشاط'],
-            threshold: 0.65
-        },
-        INDUSTRIAL_ZONE: {
-            keywords: ['منطقة صناعية', 'مناطق صناعية', 'صناعية', 'منطقة'],
-            entities: ['محافظة', 'موقع', 'مكان'],
-            threshold: 0.70
-        },
-        INDUSTRIAL_ZONE_AUTHORITY: {
-            keywords: ['تبعية', 'جهة الولاية', 'ولاية', 'مسؤول', 'إدارة'],
-            entities: ['منطقة'],
-            threshold: 0.70
-        },
-        INDUSTRIAL_ZONE_DECISION: {
-            keywords: ['قرار', 'قرار إنشاء', 'إنشاء', 'تأسيس'],
-            entities: ['منطقة'],
-            threshold: 0.70
-        },
-        INDUSTRIAL_ZONE_AREA: {
-            keywords: ['مساحة', 'حجم', 'كم فدان', 'المساحة'],
-            entities: ['منطقة'],
-            threshold: 0.70
-        },
-        INDUSTRIAL_ZONE_CHECK: {
-            keywords: ['هل', 'منطقة صناعية', 'معتمد', 'معتمدة'],
-            entities: ['موقع', 'مكان', 'عنوان'],
-            threshold: 0.75
-        },
-        DECISION104: {
-            keywords: ['قرار 104', 'القرار 104', 'حافز', 'حوافز', 'قرار', 'إعفاء'],
-            entities: ['نشاط'],
-            threshold: 0.70
-        },
-        DECISION104_SECTOR: {
-            keywords: ['قطاع', 'قطاع أ', 'قطاع ب', 'أي قطاع'],
-            entities: ['نشاط', 'قرار 104'],
-            threshold: 0.70
-        }
-    };
-
-    // Entity patterns
-    const ENTITY_PATTERNS = {
-        ACTIVITY_NAME: /(?:نشاط|أنشطة)\s+(\w+(?:\s+\w+){0,3})/g,
-        GOVERNORATE: /(?:محافظة|بمحافظة|في)\s+(\w+)/g,
-        ZONE_NAME: /(?:منطقة|بمنطقة)\s+([^،\n]+)/g,
-        DECISION_NUMBER: /(?:قرار|القرار)\s+(\d+)/g,
-        SECTOR: /قطاع\s+([أب])/g
-    };
-
-    /**
-     * Normalize Arabic text
-     */
-    function normalizeArabic(text) {
-        if (!text) return '';
         
-        return text
-            .replace(/[ًٌٍَُِّْ]/g, '') // Remove tashkeel
-            .replace(/[أإآ]/g, 'ا')     // Normalize alef
-            .replace(/ى/g, 'ي')         // Normalize ya
-            .replace(/\s+/g, ' ')       // Normalize spaces
-            .trim();
-    }
-
-    /**
-     * Extract entities from text
-     */
-    function extractEntities(text) {
-        const normalized = normalizeArabic(text);
-        const entities = {};
-
-        // Extract activity names
-        const activityMatches = [...normalized.matchAll(ENTITY_PATTERNS.ACTIVITY_NAME)];
-        if (activityMatches.length > 0) {
-            entities.activities = activityMatches.map(m => m[1].trim());
+        // === المناطق الصناعية ===
+        INDUSTRIAL_ZONE_SEARCH: {
+            keywords: ['منطقة صناعية', 'مناطق صناعية', 'صناعية', 'منطقة', 'مدينة صناعية'],
+            vectors: ['منطقة صناعية', 'صناعية', 'مدينة صناعية'],
+            threshold: 0.80,
+            dataType: 'industrial'
+        },
+        INDUSTRIAL_ZONE_DETAILS: {
+            keywords: ['تفاصيل', 'معلومات', 'بيانات', 'مواصفات', 'خصائص', 'صفات'],
+            vectors: ['تفاصيل', 'معلومات', 'بيانات'],
+            threshold: 0.70,
+            dataType: 'industrial'
+        },
+        
+        // === القرار 104 ===
+        DECISION104_CHECK: {
+            keywords: ['قرار 104', 'القرار 104', 'حافز', 'حوافز', 'إعفاء', 'إعفاءات', 'مشمول', 'يشمل'],
+            vectors: ['قرار 104', 'حافز', 'إعفاء'],
+            threshold: 0.85,
+            dataType: 'decision104'
+        },
+        DECISION104_DETAILS: {
+            keywords: ['تفاصيل القرار', 'بنود القرار', 'مواد القرار', 'نص القرار'],
+            vectors: ['تفاصيل', 'بنود', 'مواد'],
+            threshold: 0.75,
+            dataType: 'decision104'
         }
+    };
 
-        // Extract governorates
-        const govMatches = [...normalized.matchAll(ENTITY_PATTERNS.GOVERNORATE)];
-        if (govMatches.length > 0) {
-            entities.governorates = govMatches.map(m => m[1].trim());
-        }
-
-        // Extract zone names
-        const zoneMatches = [...normalized.matchAll(ENTITY_PATTERNS.ZONE_NAME)];
-        if (zoneMatches.length > 0) {
-            entities.zones = zoneMatches.map(m => m[1].trim());
-        }
-
-        // Extract decision numbers
-        const decisionMatches = [...normalized.matchAll(ENTITY_PATTERNS.DECISION_NUMBER)];
-        if (decisionMatches.length > 0) {
-            entities.decisions = decisionMatches.map(m => m[1]);
-        }
-
-        // Extract sectors
-        const sectorMatches = [...normalized.matchAll(ENTITY_PATTERNS.SECTOR)];
-        if (sectorMatches.length > 0) {
-            entities.sectors = sectorMatches.map(m => m[1]);
-        }
-
-        return entities;
-    }
-
-    /**
-     * Parse intent from query
-     */
-    function parseIntent(query, history = []) {
+    // ================ تحليل النية باستخدام Vectors ================
+    async function parseIntentWithVectors(query, history = []) {
         const normalized = normalizeArabic(query);
-        const entities = extractEntities(query);
+        const queryTokens = normalized.split(/\s+/).filter(t => t.length > 2);
+        
+        // تحميل جميع البيانات للتحليل
+        const allData = DataLoader.getAllData();
         const intents = [];
-
-        // Check each intent pattern
+        
+        // تحليل كل نوع نية
         for (const [intentName, pattern] of Object.entries(INTENT_PATTERNS)) {
             let score = 0;
-            let matchedKeywords = [];
-
-            // Check keywords
-            for (const keyword of pattern.keywords) {
-                if (normalized.includes(normalizeArabic(keyword))) {
-                    score += 1;
-                    matchedKeywords.push(keyword);
-                }
+            let matchedVectors = [];
+            
+            // 1. مطابقة الكلمات المفتاحية التقليدية (40%)
+            const keywordScore = calculateKeywordScore(normalized, pattern.keywords);
+            score += keywordScore * 0.4;
+            
+            // 2. مطابقة مع Vectors الأنشطة (30%)
+            if (allData.activities && pattern.dataType === 'activities') {
+                const vectorScore = await calculateVectorSimilarity(query, allData.activities, pattern.vectors);
+                score += vectorScore * 0.3;
             }
-
-            // Check entities
-            for (const entity of pattern.entities) {
-                if (normalized.includes(normalizeArabic(entity))) {
-                    score += 0.5;
-                }
+            
+            // 3. مطابقة مع Vectors القرار 104 (30%)
+            if (allData.decision104 && pattern.dataType === 'decision104') {
+                const vectorScore = await calculateVectorSimilarity(query, allData.decision104, pattern.vectors);
+                score += vectorScore * 0.3;
             }
-
-            // Calculate confidence
-            const maxScore = pattern.keywords.length + pattern.entities.length * 0.5;
-            const confidence = maxScore > 0 ? score / maxScore : 0;
-
-            if (confidence >= pattern.threshold) {
+            
+            // 4. مكافأة للتكرار في التاريخ (للمتابعة)
+            if (isFollowUpQuery(query, history, intentName)) {
+                score += 0.2;
+            }
+            
+            if (score >= pattern.threshold) {
                 intents.push({
                     name: intentName,
-                    confidence,
-                    matchedKeywords,
-                    threshold: pattern.threshold
+                    confidence: score,
+                    dataType: pattern.dataType,
+                    matchedVectors,
+                    isFollowUp: isFollowUpQuery(query, history, intentName)
                 });
             }
         }
-
-        // Sort by confidence
+        
+        // تحديد النية الأساسية
         intents.sort((a, b) => b.confidence - a.confidence);
-
-        // Handle follow-up questions
-        const isFollowUp = detectFollowUp(query, history);
-        if (isFollowUp && history.length > 0) {
-            const lastIntent = history[history.length - 1].intent;
-            if (lastIntent && intents.length === 0) {
-                // Inherit previous intent with lower confidence
-                intents.push({
-                    name: lastIntent.name,
-                    confidence: 0.6,
-                    matchedKeywords: [],
-                    isInherited: true
-                });
-            }
-        }
-
+        const primaryIntent = intents[0] || { 
+            name: 'GENERAL', 
+            confidence: 0.5,
+            dataType: 'all'
+        };
+        
+        // استخراج الكيانات
+        const entities = extractEntitiesFromVectors(query, allData);
+        
         return {
-            primary: intents[0] || { name: 'GENERAL', confidence: 0.5 },
+            primary: primaryIntent,
             all: intents,
             entities,
-            isFollowUp,
-            normalized
+            queryTokens,
+            context: buildVectorContext(history, allData)
         };
     }
-
-    /**
-     * Detect follow-up questions
-     */
-    function detectFollowUp(query, history) {
-        if (history.length === 0) return false;
-
-        const normalized = normalizeArabic(query);
-        const followUpIndicators = [
-            'هذا',
-            'هذه',
-            'تلك',
-            'ذلك',
-            'السابق',
-            'المذكور',
-            'نفس',
-            'أيضا',
-            'كذلك',
-            'وماذا عن',
-            'ماذا عن'
-        ];
-
-        return followUpIndicators.some(indicator => 
-            normalized.includes(normalizeArabic(indicator))
-        );
-    }
-
-    /**
-     * Build context from history
-     */
-    function buildContext(history) {
-        if (history.length === 0) return null;
-
-        const recentHistory = history.slice(-3); // Last 3 exchanges
-        const context = {
-            entities: {},
-            topics: [],
-            keywords: []
-        };
-
-        recentHistory.forEach(item => {
-            // Merge entities
-            if (item.entities) {
-                Object.keys(item.entities).forEach(key => {
-                    if (!context.entities[key]) {
-                        context.entities[key] = [];
+    
+    // ================ حساب تشابه Vectors ================
+    async function calculateVectorSimilarity(query, vectors, targetVectors = []) {
+        if (!vectors || vectors.length === 0) return 0;
+        
+        const queryNorm = normalizeArabic(query);
+        let totalScore = 0;
+        let matchCount = 0;
+        
+        // البحث في النصوص المعززة (enriched_text) أولاً
+        vectors.forEach(item => {
+            if (item.enriched_text) {
+                const enrichedNorm = normalizeArabic(item.enriched_text);
+                
+                // مطابقة مع target vectors
+                targetVectors.forEach(target => {
+                    if (enrichedNorm.includes(normalizeArabic(target))) {
+                        totalScore += 1.0;
+                        matchCount++;
                     }
-                    context.entities[key].push(...item.entities[key]);
+                });
+                
+                // مطابقة مع query
+                const queryWords = queryNorm.split(/\s+/);
+                queryWords.forEach(word => {
+                    if (word.length > 2 && enrichedNorm.includes(word)) {
+                        totalScore += 0.5;
+                        matchCount++;
+                    }
                 });
             }
-
-            // Collect topics
-            if (item.intent && item.intent.primary) {
-                context.topics.push(item.intent.primary.name);
-            }
         });
-
-        // Deduplicate
-        Object.keys(context.entities).forEach(key => {
-            context.entities[key] = [...new Set(context.entities[key])];
-        });
-        context.topics = [...new Set(context.topics)];
-
-        return context;
-    }
-
-    /**
-     * Decompose complex query
-     */
-    function decomposeQuery(query) {
-        const normalized = normalizeArabic(query);
-        const subQueries = [];
-
-        // Split by conjunctions
-        const parts = normalized.split(/\s+(?:و|أو|ثم|كذلك)\s+/);
         
-        if (parts.length > 1) {
-            parts.forEach((part, idx) => {
-                if (part.trim().length > 10) { // Meaningful length
-                    subQueries.push({
-                        text: part.trim(),
-                        order: idx,
-                        isSubQuery: true
+        return matchCount > 0 ? totalScore / matchCount : 0;
+    }
+    
+    // ================ استخراج الكيانات من Vectors ================
+    function extractEntitiesFromVectors(query, allData) {
+        const entities = {
+            activities: [],
+            zones: [],
+            decisions: [],
+            keywords: []
+        };
+        
+        const queryNorm = normalizeArabic(query);
+        
+        // استخراج الأنشطة
+        if (allData.activities) {
+            allData.activities.forEach(activity => {
+                const activityNorm = normalizeArabic(activity.text);
+                // إذا كان النشاط مذكور في الاستعلام
+                if (queryNorm.includes(activityNorm) || activityNorm.includes(queryNorm)) {
+                    entities.activities.push({
+                        name: activity.text,
+                        id: activity.id,
+                        matchScore: calculateTextSimilarity(queryNorm, activityNorm)
                     });
                 }
             });
         }
-
-        return subQueries.length > 1 ? subQueries : null;
+        
+        // استخراج المناطق الصناعية
+        if (allData.industrial) {
+            allData.industrial.forEach(zone => {
+                const zoneNorm = normalizeArabic(zone.text);
+                if (queryNorm.includes(zoneNorm) || zoneNorm.includes(queryNorm)) {
+                    entities.zones.push({
+                        name: zone.text,
+                        id: zone.id,
+                        matchScore: calculateTextSimilarity(queryNorm, zoneNorm)
+                    });
+                }
+            });
+        }
+        
+        // ترتيب الكيانات حسب درجة المطابقة
+        entities.activities.sort((a, b) => b.matchScore - a.matchScore);
+        entities.zones.sort((a, b) => b.matchScore - a.matchScore);
+        
+        return entities;
     }
-
-    /**
-     * Get dynamic threshold based on intent
-     */
-    function getDynamicThreshold(intent) {
-        const thresholds = {
-            ACTIVITY_LICENSE: 0.60,
-            ACTIVITY_AUTHORITY: 0.60,
-            ACTIVITY_LAW: 0.65,
-            ACTIVITY_GUIDE: 0.60,
-            ACTIVITY_LOCATION: 0.60,
-            ACTIVITY_TECHNICAL: 0.65,
-            ACTIVITY_DESCRIPTION: 0.60,
-            INDUSTRIAL_ZONE: 0.70,
-            INDUSTRIAL_ZONE_AUTHORITY: 0.70,
-            INDUSTRIAL_ZONE_DECISION: 0.70,
-            INDUSTRIAL_ZONE_AREA: 0.70,
-            INDUSTRIAL_ZONE_CHECK: 0.75,
-            DECISION104: 0.65,
-            DECISION104_SECTOR: 0.70,
-            GENERAL: 0.55
+    
+    // ================ بناء السياق من Vectors ================
+    function buildVectorContext(history, allData) {
+        if (history.length === 0) return null;
+        
+        const context = {
+            recentEntities: {},
+            topicFlow: [],
+            vectorReferences: []
         };
-
-        return thresholds[intent] || 0.60;
+        
+        // تحليل آخر 3 أسئلة
+        const recentHistory = history.slice(-3);
+        
+        recentHistory.forEach((item, index) => {
+            // جمع الكيانات من الأسئلة السابقة
+            if (item.entities) {
+                Object.keys(item.entities).forEach(entityType => {
+                    if (!context.recentEntities[entityType]) {
+                        context.recentEntities[entityType] = [];
+                    }
+                    context.recentEntities[entityType].push(...item.entities[entityType]);
+                });
+            }
+            
+            // تتبع تدفق الموضوعات
+            if (item.intent) {
+                context.topicFlow.push({
+                    intent: item.intent.primary.name,
+                    query: item.question,
+                    timestamp: item.timestamp
+                });
+            }
+        });
+        
+        // إزالة التكرارات
+        Object.keys(context.recentEntities).forEach(key => {
+            context.recentEntities[key] = [...new Set(context.recentEntities[key])];
+        });
+        
+        return context;
     }
-
+    
+    // ================ دعم الإكمال التلقائي والتوقع ================
+    function predictNextQuestion(currentIntent, context) {
+        const predictions = [];
+        
+        if (currentIntent.name.startsWith('ACTIVITY')) {
+            predictions.push(
+                "ما هي التراخيص المطلوبة؟",
+                "ما هي الجهات المختصة؟",
+                "هل يحتاج إلى موافقات خاصة؟"
+            );
+        } else if (currentIntent.name.startsWith('INDUSTRIAL')) {
+            predictions.push(
+                "ما هي مساحتها؟",
+                "ما هي التبعية الإدارية؟",
+                "هل توجد أراضي متاحة؟"
+            );
+        } else if (currentIntent.name.startsWith('DECISION104')) {
+            predictions.push(
+                "ما هي الحوافز المتاحة؟",
+                "هل هناك إعفاءات جمركية؟",
+                "ما هي الإجراءات المطلوبة؟"
+            );
+        }
+        
+        return predictions;
+    }
+    
+    // ================ الدوال المساعدة ================
+    function calculateKeywordScore(query, keywords) {
+        const normalized = normalizeArabic(query);
+        let matches = 0;
+        
+        keywords.forEach(keyword => {
+            if (normalized.includes(normalizeArabic(keyword))) {
+                matches++;
+            }
+        });
+        
+        return keywords.length > 0 ? matches / keywords.length : 0;
+    }
+    
+    function calculateTextSimilarity(text1, text2) {
+        const words1 = text1.split(/\s+/);
+        const words2 = text2.split(/\s+/);
+        
+        const intersection = words1.filter(word => 
+            words2.some(w => w.includes(word) || word.includes(w))
+        );
+        
+        const union = [...new Set([...words1, ...words2])];
+        
+        return union.length > 0 ? intersection.length / union.length : 0;
+    }
+    
+    function isFollowUpQuery(query, history, intentName) {
+        if (history.length === 0) return false;
+        
+        const lastIntent = history[history.length - 1].intent;
+        if (!lastIntent) return false;
+        
+        // إذا كان السؤال يشير إلى شيء سابق
+        const followUpWords = ['هذا', 'هذه', 'تلك', 'السابق', 'المذكور', 'نفس'];
+        const hasFollowUpIndicator = followUpWords.some(word => 
+            normalizeArabic(query).includes(normalizeArabic(word))
+        );
+        
+        return hasFollowUpIndicator && lastIntent.primary.name === intentName;
+    }
+    
+    function normalizeArabic(text) {
+        if (!text) return '';
+        return text
+            .replace(/[ًٌٍَُِّْ]/g, '')
+            .replace(/[أإآ]/g, 'ا')
+            .replace(/ى/g, 'ي')
+            .replace(/\s+/g, ' ')
+            .trim();
+    }
+    
     return {
         normalizeArabic,
-        extractEntities,
-        parseIntent,
-        detectFollowUp,
-        buildContext,
-        decomposeQuery,
-        getDynamicThreshold
+        parseIntentWithVectors,
+        extractEntitiesFromVectors,
+        buildVectorContext,
+        predictNextQuestion,
+        calculateVectorSimilarity
     };
 })();
