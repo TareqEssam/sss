@@ -1,78 +1,24 @@
 /**
- * Expert Assistant Core - المحرك الرئيسي
- * يجمع بين البحث المتجه والفهم السياقي لتوليد إجابات دقيقة
+ * Expert Assistant Core - Simple Version
+ * بحث نصي محسّن بدون نماذج AI ثقيلة - سريع وفعال
  */
 
 const ExpertAssistant = (() => {
     
     /**
-     * Simple embedding function (TF-IDF-like for Arabic)
-     * This is a lightweight alternative until we load a proper model
+     * البحث المتقدم بالكلمات المفتاحية
      */
-    function simpleEmbed(text) {
-        const normalized = IntentEngine.normalizeArabic(text);
-        const words = normalized.split(/\s+/);
-        
-        // Create a simple bag-of-words vector (384 dimensions like the original model)
-        const vector = new Array(384).fill(0);
-        
-        words.forEach((word, idx) => {
-            // Simple hash function to distribute words across dimensions
-            for (let i = 0; i < word.length; i++) {
-                const charCode = word.charCodeAt(i);
-                const dimension = (charCode * (i + 1) * (idx + 1)) % 384;
-                vector[dimension] += 1 / (i + 1); // Weight by position
-            }
-        });
-        
-        // Normalize
-        const magnitude = Math.sqrt(vector.reduce((sum, val) => sum + val * val, 0));
-        return magnitude > 0 ? vector.map(v => v / magnitude) : vector;
-    }
-
-    /**
-     * Cosine similarity between two vectors
-     */
-    function cosineSimilarity(vec1, vec2) {
-        if (!vec1 || !vec2 || vec1.length !== vec2.length) return 0;
-        
-        let dotProduct = 0;
-        for (let i = 0; i < vec1.length; i++) {
-            dotProduct += vec1[i] * vec2[i];
-        }
-        
-        return Math.max(0, Math.min(1, dotProduct)); // Clamp to [0, 1]
-    }
-
-    /**
-     * Keyword matching score
-     */
-    function keywordScore(query, text) {
-        const queryNorm = IntentEngine.normalizeArabic(query);
-        const textNorm = IntentEngine.normalizeArabic(text);
-        
-        const queryWords = queryNorm.split(/\s+/).filter(w => w.length > 2);
-        const textWords = textNorm.split(/\s+/);
-        
-        let matches = 0;
-        queryWords.forEach(qWord => {
-            if (textWords.some(tWord => tWord.includes(qWord) || qWord.includes(tWord))) {
-                matches++;
-            }
-        });
-        
-        return queryWords.length > 0 ? matches / queryWords.length : 0;
-    }
-
-    /**
-     * Search vectors with hybrid approach
-     */
-    function searchVectors(query, dataType = 'all', topK = 5, threshold = 0.60) {
-        const queryVector = simpleEmbed(query);
+    async function searchVectors(query, dataType = 'all', topK = 10, threshold = 0.25) {
         const allData = DataLoader.getAllData();
         let results = [];
 
-        // Determine which datasets to search
+        // تطبيع الاستعلام
+        const queryNorm = IntentEngine.normalizeArabic(query);
+        const queryWords = queryNorm.split(/\s+/).filter(w => w.length > 2);
+
+        console.log(`🔍 Searching for: "${query}" (${queryWords.length} keywords)`);
+
+        // تحديد قواعد البيانات المستهدفة
         const datasetsToSearch = [];
         if (dataType === 'all' || dataType === 'activities') {
             datasetsToSearch.push({ name: 'activities', data: allData.activities });
@@ -84,43 +30,95 @@ const ExpertAssistant = (() => {
             datasetsToSearch.push({ name: 'industrial', data: allData.industrial });
         }
 
-        // Search each dataset
+        // البحث في كل قاعدة بيانات
         datasetsToSearch.forEach(dataset => {
-            if (!dataset.data) return;
+            if (!dataset.data || dataset.data.length === 0) {
+                console.warn(`Dataset ${dataset.name} is empty or missing`);
+                return;
+            }
+
+            console.log(`Searching in ${dataset.name}: ${dataset.data.length} items`);
 
             dataset.data.forEach(item => {
-                // Vector similarity
-                const vectorSim = item.normalizedVector ? 
-                    cosineSimilarity(queryVector, item.normalizedVector) : 0;
+                const textNorm = IntentEngine.normalizeArabic(item.text);
+                const enrichedNorm = IntentEngine.normalizeArabic(item.enriched_text || '');
+                
+                let matchScore = 0;
+                let matchedWords = 0;
+                let exactMatches = 0;
 
-                // Keyword matching on enriched text
-                const keywordSim = keywordScore(query, item.enriched_text || item.text);
+                queryWords.forEach(word => {
+                    // تطابق تام في النص الرئيسي (أعلى أولوية)
+                    if (textNorm.includes(word)) {
+                        matchScore += 5;
+                        matchedWords++;
+                        exactMatches++;
+                    }
+                    // تطابق جزئي في النص الرئيسي
+                    else if (textNorm.split(/\s+/).some(w => w.includes(word) || word.includes(w))) {
+                        matchScore += 3;
+                        matchedWords++;
+                    }
+                    // تطابق تام في النص المعزز
+                    else if (enrichedNorm.includes(word)) {
+                        matchScore += 2;
+                        matchedWords++;
+                    }
+                    // تطابق جزئي في النص المعزز
+                    else if (enrichedNorm.split(/\s+/).some(w => w.includes(word) || word.includes(w))) {
+                        matchScore += 1;
+                        matchedWords++;
+                    }
+                });
 
-                // Hybrid score (70% vector, 30% keyword)
-                const hybridScore = (vectorSim * 0.7) + (keywordSim * 0.3);
+                // حساب النتيجة النهائية
+                const coverage = queryWords.length > 0 ? matchedWords / queryWords.length : 0;
+                const avgScore = queryWords.length > 0 ? matchScore / (queryWords.length * 5) : 0;
+                
+                // وزن التغطية 60% والنتيجة المتوسطة 40%
+                let finalScore = (coverage * 0.6) + (avgScore * 0.4);
+                
+                // مكافأة للتطابقات التامة
+                if (exactMatches > 0) {
+                    finalScore += (exactMatches / queryWords.length) * 0.1;
+                }
 
-                if (hybridScore >= threshold) {
+                if (finalScore >= threshold) {
                     results.push({
                         id: item.id,
                         text: item.text,
                         enrichedText: item.enriched_text,
-                        score: hybridScore,
-                        vectorScore: vectorSim,
-                        keywordScore: keywordSim,
+                        score: Math.min(1.0, finalScore),
                         source: dataset.name,
-                        rawData: item
+                        rawData: item,
+                        matchedWords,
+                        coverage: coverage * 100,
+                        exactMatches
                     });
                 }
             });
         });
 
-        // Sort by score and return top K
-        results.sort((a, b) => b.score - a.score);
+        // ترتيب النتائج
+        results.sort((a, b) => {
+            // أولوية للتطابقات التامة
+            if (a.exactMatches !== b.exactMatches) {
+                return b.exactMatches - a.exactMatches;
+            }
+            // ثم النتيجة الإجمالية
+            return b.score - a.score;
+        });
+        
+        console.log(`✅ Found ${results.length} results, returning top ${topK}`);
+        if (results.length > 0) {
+            console.log(`Top result: "${results[0].text}" (Score: ${(results[0].score * 100).toFixed(0)}%, Coverage: ${results[0].coverage.toFixed(0)}%)`);
+        }
+        
         return results.slice(0, topK);
     }
 
     /**
-     * Re-rank results based on intent and context
+     * إعادة ترتيب النتائج حسب النية والسياق
      */
     function rerankResults(results, intent, context) {
         if (!intent || results.length === 0) return results;
@@ -128,16 +126,16 @@ const ExpertAssistant = (() => {
         return results.map(result => {
             let bonus = 0;
 
-            // Boost based on source relevance
+            // مكافأة حسب نوع المصدر
             if (intent.primary.name.startsWith('INDUSTRIAL_ZONE') && result.source === 'industrial') {
-                bonus += 0.1;
+                bonus += 0.2;
             } else if (intent.primary.name.startsWith('DECISION104') && result.source === 'decision104') {
-                bonus += 0.1;
+                bonus += 0.2;
             } else if (intent.primary.name.startsWith('ACTIVITY') && result.source === 'activities') {
-                bonus += 0.1;
+                bonus += 0.2;
             }
 
-            // Boost if entities match
+            // مكافأة لتطابق الكيانات
             if (context && context.entities) {
                 Object.values(context.entities).flat().forEach(entity => {
                     if (result.enrichedText && 
@@ -158,7 +156,7 @@ const ExpertAssistant = (() => {
     }
 
     /**
-     * Extract specific information based on intent
+     * استخراج المعلومات من النتائج
      */
     function extractInformation(results, intent) {
         if (results.length === 0) return null;
@@ -167,35 +165,38 @@ const ExpertAssistant = (() => {
         const intentName = intent.primary.name;
 
         results.forEach(result => {
+            // معالجة الأنشطة
             if (result.source === 'activities' && result.rawData) {
-                const data = result.rawData;
+                const enriched = result.rawData.enriched_text || '';
                 
-                // Parse enriched text to extract structured info
-                const enriched = data.enriched_text || '';
-                
-                if (intentName === 'ACTIVITY_LICENSE') {
+                if (intentName === 'ACTIVITY_LICENSE' || intentName.includes('LICENSE')) {
                     extracted.licenses = extractSection(enriched, 'المتطلبات:');
                 }
-                if (intentName === 'ACTIVITY_AUTHORITY') {
+                if (intentName === 'ACTIVITY_AUTHORITY' || intentName.includes('AUTHORITY')) {
                     extracted.authority = extractSection(enriched, 'الجهة:');
                 }
-                if (intentName === 'ACTIVITY_LAW') {
+                if (intentName === 'ACTIVITY_LAW' || intentName.includes('LAW')) {
                     extracted.law = extractSection(enriched, 'القانون:');
                 }
-                if (intentName === 'ACTIVITY_GUIDE') {
+                if (intentName === 'ACTIVITY_GUIDE' || intentName.includes('GUIDE')) {
                     extracted.guide = extractSection(enriched, 'الدليل:');
                 }
-                if (intentName === 'ACTIVITY_LOCATION') {
+                if (intentName === 'ACTIVITY_LOCATION' || intentName.includes('LOCATION')) {
                     extracted.location = extractSection(enriched, 'الموقع:');
                 }
-                if (intentName === 'ACTIVITY_TECHNICAL') {
+                if (intentName === 'ACTIVITY_TECHNICAL' || intentName.includes('TECHNICAL')) {
                     extracted.technical = extractSection(enriched, 'ملاحظات فنية:');
                 }
-                if (intentName === 'ACTIVITY_DESCRIPTION') {
+                if (intentName === 'ACTIVITY_DESCRIPTION' || intentName.includes('DESCRIPTION')) {
                     extracted.description = extractSection(enriched, 'الإجراءات:');
                 }
+                
+                // معلومات عامة دائماً
+                if (!extracted.licenses) extracted.licenses = extractSection(enriched, 'المتطلبات:');
+                if (!extracted.authority) extracted.authority = extractSection(enriched, 'الجهة:');
             }
 
+            // معالجة المناطق الصناعية
             if (result.source === 'industrial' && result.rawData) {
                 const enriched = result.enrichedText || '';
                 
@@ -207,11 +208,11 @@ const ExpertAssistant = (() => {
                 extracted.location = extractField(enriched, 'موقع:');
             }
 
+            // معالجة القرار 104
             if (result.source === 'decision104' && result.rawData) {
                 extracted.decision104 = result.text;
                 const enriched = result.enrichedText || '';
                 
-                // Extract sector
                 const sectorMatch = enriched.match(/قطاع\s+([أب])/);
                 if (sectorMatch) {
                     extracted.sector = sectorMatch[1];
@@ -223,20 +224,21 @@ const ExpertAssistant = (() => {
     }
 
     /**
-     * Extract section from enriched text
+     * استخراج قسم من النص المعزز
      */
     function extractSection(text, marker) {
         const parts = text.split('|');
         for (const part of parts) {
-            if (part.trim().startsWith(marker)) {
-                return part.substring(part.indexOf(':') + 1).trim();
+            const trimmed = part.trim();
+            if (trimmed.startsWith(marker)) {
+                return trimmed.substring(trimmed.indexOf(':') + 1).trim();
             }
         }
         return null;
     }
 
     /**
-     * Extract field from enriched text
+     * استخراج حقل من النص المعزز
      */
     function extractField(text, marker) {
         const regex = new RegExp(marker + '\\s*([^|]+)', 'i');
@@ -245,17 +247,16 @@ const ExpertAssistant = (() => {
     }
 
     /**
-     * Generate answer from results
+     * توليد الإجابة
      */
     function generateAnswer(query, results, intent, extracted) {
         if (results.length === 0) {
-            return 'عذراً، لم أتمكن من العثور على معلومات دقيقة تتعلق بسؤالك. يرجى إعادة صياغة السؤال أو تحديد تفاصيل أكثر.';
+            return 'عذراً، لم أتمكن من العثور على معلومات دقيقة. يمكنك:\n• إعادة صياغة السؤال\n• استخدام كلمات مفتاحية مختلفة\n• تجربة الأسئلة السريعة في الأسفل';
         }
 
         const intentName = intent.primary.name;
         let answer = '';
 
-        // Generate answer based on intent
         if (intentName.startsWith('ACTIVITY')) {
             answer = generateActivityAnswer(query, results, intent, extracted);
         } else if (intentName.startsWith('INDUSTRIAL_ZONE')) {
@@ -263,7 +264,6 @@ const ExpertAssistant = (() => {
         } else if (intentName.startsWith('DECISION104')) {
             answer = generateDecision104Answer(query, results, intent, extracted);
         } else {
-            // General answer
             answer = generateGeneralAnswer(query, results);
         }
 
@@ -271,211 +271,186 @@ const ExpertAssistant = (() => {
     }
 
     /**
-     * Generate activity-specific answer
+     * إجابة خاصة بالأنشطة
      */
     function generateActivityAnswer(query, results, intent, extracted) {
         const intentName = intent.primary.name;
-        let answer = '';
-
         const topResult = results[0];
         const activityName = topResult.text;
 
-        if (intentName === 'ACTIVITY_LICENSE') {
-            answer = `بالنسبة لـ ${activityName}:\n\n`;
-            answer += `📋 التراخيص المطلوبة:\n${extracted.licenses || 'لم يتم العثور على معلومات محددة'}`;
+        let answer = `**${activityName}**\n\n`;
+
+        if (intentName === 'ACTIVITY_LICENSE' && extracted && extracted.licenses) {
+            answer += `📋 **التراخيص المطلوبة:**\n${extracted.licenses}`;
         } 
-        else if (intentName === 'ACTIVITY_AUTHORITY') {
-            answer = `بالنسبة لـ ${activityName}:\n\n`;
-            answer += `🏛️ الجهات المختصة:\n${extracted.authority || 'لم يتم العثور على معلومات محددة'}`;
+        else if (intentName === 'ACTIVITY_AUTHORITY' && extracted && extracted.authority) {
+            answer += `🏛️ **الجهات المختصة:**\n${extracted.authority}`;
         }
-        else if (intentName === 'ACTIVITY_LAW') {
-            answer = `بالنسبة لـ ${activityName}:\n\n`;
-            answer += `⚖️ السند التشريعي:\n${extracted.law || 'لم يتم العثور على معلومات محددة'}`;
+        else if (intentName === 'ACTIVITY_LAW' && extracted && extracted.law) {
+            answer += `⚖️ **السند التشريعي:**\n${extracted.law}`;
         }
-        else if (intentName === 'ACTIVITY_GUIDE') {
-            answer = `بالنسبة لـ ${activityName}:\n\n`;
-            answer += `📖 الدليل الإرشادي:\n${extracted.guide || 'لم يتم العثور على معلومات محددة'}`;
+        else if (intentName === 'ACTIVITY_GUIDE' && extracted && extracted.guide) {
+            answer += `📖 **الدليل الإرشادي:**\n${extracted.guide}`;
         }
-        else if (intentName === 'ACTIVITY_LOCATION') {
-            answer = `بالنسبة لـ ${activityName}:\n\n`;
-            answer += `📍 الموقع الملائم:\n${extracted.location || 'لم يتم العثور على معلومات محددة'}`;
+        else if (intentName === 'ACTIVITY_LOCATION' && extracted && extracted.location) {
+            answer += `📍 **الموقع الملائم:**\n${extracted.location}`;
         }
-        else if (intentName === 'ACTIVITY_TECHNICAL') {
-            answer = `بالنسبة لـ ${activityName}:\n\n`;
-            answer += `🔧 النقاط الفنية عند المعاينة:\n${extracted.technical || 'لم يتم العثور على معلومات محددة'}`;
-            
-            // Truncate if too long
-            if (answer.length > 1500) {
-                const preview = answer.substring(0, 1500);
-                answer = preview.substring(0, preview.lastIndexOf('\n')) + '\n\n... (للمزيد من التفاصيل، يمكنك السؤال عن نقطة محددة)';
+        else if (intentName === 'ACTIVITY_TECHNICAL' && extracted && extracted.technical) {
+            const tech = extracted.technical;
+            answer += `🔧 **النقاط الفنية للمعاينة:**\n${tech.substring(0, 1200)}`;
+            if (tech.length > 1200) {
+                answer += '\n\n💡 *للحصول على المزيد من التفاصيل، اسأل عن نقطة محددة*';
             }
         }
-        else if (intentName === 'ACTIVITY_DESCRIPTION') {
-            answer = `بالنسبة لـ ${activityName}:\n\n`;
-            answer += `📝 توصيف النشاط:\n${extracted.description || 'لم يتم العثور على معلومات محددة'}`;
+        else if (intentName === 'ACTIVITY_DESCRIPTION' && extracted && extracted.description) {
+            answer += `📝 **توصيف النشاط:**\n${extracted.description}`;
         }
         else {
-            answer = `وجدت معلومات عن: ${activityName}\n\n`;
-            answer += 'يمكنني مساعدتك في معرفة:\n';
-            answer += '- التراخيص المطلوبة\n';
-            answer += '- الجهات المختصة\n';
-            answer += '- القوانين واللوائح\n';
-            answer += '- النقاط الفنية للمعاينة\n';
-            answer += '\nما الذي تود معرفته تحديداً؟';
+            // إجابة عامة مع كل المعلومات المتاحة
+            if (extracted) {
+                if (extracted.licenses) {
+                    answer += `📋 **التراخيص:**\n${extracted.licenses}\n\n`;
+                }
+                if (extracted.authority) {
+                    answer += `🏛️ **الجهات:**\n${extracted.authority}\n\n`;
+                }
+            }
+            
+            answer += '💡 *يمكنني مساعدتك في معرفة المزيد عن:*\n';
+            answer += '• التراخيص والمتطلبات\n';
+            answer += '• الجهات المختصة\n';
+            answer += '• القوانين واللوائح\n';
+            answer += '• النقاط الفنية للمعاينة';
         }
 
         return answer;
     }
 
     /**
-     * Generate industrial zone answer
+     * إجابة خاصة بالمناطق الصناعية
      */
     function generateIndustrialAnswer(query, results, intent, extracted) {
         const intentName = intent.primary.name;
-        let answer = '';
 
-        if (results.length === 1) {
+        if (results.length === 1 && extracted) {
             const zone = extracted.zone || results[0].text;
-            
+            let answer = `**${zone}**\n\n`;
+
             if (intentName === 'INDUSTRIAL_ZONE_AUTHORITY') {
-                answer = `${zone}\n\n`;
-                answer += `🏛️ جهة الولاية: ${extracted.dependency || 'غير محدد'}`;
+                answer += `🏛️ **جهة الولاية:** ${extracted.dependency || 'غير محدد'}`;
             }
             else if (intentName === 'INDUSTRIAL_ZONE_DECISION') {
-                answer = `${zone}\n\n`;
-                answer += `📜 قرار الإنشاء: ${extracted.decision || 'غير محدد'}`;
+                answer += `📜 **قرار الإنشاء:**\n${extracted.decision || 'غير محدد'}`;
             }
             else if (intentName === 'INDUSTRIAL_ZONE_AREA') {
-                answer = `${zone}\n\n`;
-                answer += `📐 المساحة: ${extracted.area || 'غير محدد'}`;
+                answer += `📐 **المساحة:** ${extracted.area || 'غير محدد'}`;
             }
             else if (intentName === 'INDUSTRIAL_ZONE_CHECK') {
-                answer = `✅ نعم، ${zone} هي منطقة صناعية معتمدة.\n\n`;
-                answer += `📍 المحافظة: ${extracted.governorate || 'غير محدد'}\n`;
-                answer += `🏛️ التبعية: ${extracted.dependency || 'غير محدد'}`;
+                answer += `✅ نعم، هذه منطقة صناعية معتمدة\n\n`;
+                answer += `📍 **المحافظة:** ${extracted.governorate || 'غير محدد'}\n`;
+                answer += `🏛️ **التبعية:** ${extracted.dependency || 'غير محدد'}`;
             }
             else {
-                answer = `${zone}\n\n`;
-                answer += `📍 المحافظة: ${extracted.governorate || 'غير محدد'}\n`;
-                answer += `🏛️ التبعية: ${extracted.dependency || 'غير محدد'}\n`;
-                answer += `📐 المساحة: ${extracted.area || 'غير محدد'}\n`;
-                answer += `📜 القرار: ${extracted.decision || 'غير محدد'}`;
+                answer += `📍 **المحافظة:** ${extracted.governorate || 'غير محدد'}\n`;
+                answer += `🏛️ **التبعية:** ${extracted.dependency || 'غير محدد'}\n`;
+                answer += `📐 **المساحة:** ${extracted.area || 'غير محدد'}\n`;
+                answer += `📜 **القرار:** ${extracted.decision || 'غير محدد'}`;
             }
-        } else {
-            // Multiple zones
-            answer = `وجدت ${results.length} منطقة صناعية:\n\n`;
-            results.forEach((result, idx) => {
-                answer += `${idx + 1}. ${result.text}\n`;
-            });
-            answer += '\nيمكنك السؤال عن أي منطقة محددة للحصول على التفاصيل الكاملة.';
-        }
 
-        return answer;
+            return answer;
+        } else {
+            let answer = `وجدت **${results.length}** منطقة صناعية:\n\n`;
+            results.slice(0, 10).forEach((result, idx) => {
+                const conf = (result.score * 100).toFixed(0);
+                answer += `${idx + 1}. ${result.text} (${conf}%)\n`;
+            });
+            answer += '\n💡 *اسأل عن أي منطقة للحصول على التفاصيل الكاملة*';
+            return answer;
+        }
     }
 
     /**
-     * Generate Decision 104 answer
+     * إجابة خاصة بالقرار 104
      */
     function generateDecision104Answer(query, results, intent, extracted) {
-        let answer = '';
-
         if (extracted && extracted.decision104) {
-            answer = `✅ نعم، هذا النشاط وارد في القرار 104 ويحصل على الحوافز.\n\n`;
-            answer += `📋 النشاط: ${extracted.decision104}\n`;
+            let answer = `✅ **نعم، هذا النشاط وارد في القرار 104**\n\n`;
+            answer += `📋 **النشاط:** ${extracted.decision104}\n`;
             
             if (extracted.sector) {
-                answer += `📊 القطاع: ${extracted.sector === 'أ' ? 'قطاع أ (أولوية عليا)' : 'قطاع ب (أولوية متوسطة)'}`;
+                const sectorDesc = extracted.sector === 'أ' ? 
+                    'قطاع أ (أولوية عليا - حوافز أكبر)' : 
+                    'قطاع ب (أولوية متوسطة)';
+                answer += `📊 **القطاع:** ${sectorDesc}`;
             }
+            return answer;
         } else if (results.length > 0) {
-            const activity = results[0].text;
-            answer = `وجدت معلومات عن: ${activity}\n\n`;
-            
-            // Try to extract sector from enriched text
-            const enriched = results[0].enrichedText || '';
-            const sectorMatch = enriched.match(/قطاع\s+([أب])/);
-            
-            if (sectorMatch) {
-                const sector = sectorMatch[1];
-                answer += `✅ هذا النشاط وارد في القرار 104\n`;
-                answer += `📊 القطاع: ${sector === 'أ' ? 'قطاع أ (أولوية عليا)' : 'قطاع ب (أولوية متوسطة)'}`;
-            }
+            const topResult = results[0];
+            let answer = `✅ وجدت النشاط التالي في القرار 104:\n\n`;
+            answer += `**${topResult.text}**\n\n`;
+            answer += `💡 *الثقة: ${(topResult.score * 100).toFixed(0)}%*`;
+            return answer;
         } else {
-            answer = '❌ لم أعثر على هذا النشاط في القرار 104. يرجى التأكد من اسم النشاط أو إعادة الصياغة.';
+            return '❌ لم أعثر على هذا النشاط في القرار 104.\n\n💡 جرّب إعادة صياغة اسم النشاط أو استخدام مصطلحات بديلة.';
         }
-
-        return answer;
     }
 
     /**
-     * Generate general answer
+     * إجابة عامة
      */
     function generateGeneralAnswer(query, results) {
-        let answer = 'وجدت المعلومات التالية:\n\n';
+        let answer = `وجدت **${results.length}** نتيجة مطابقة:\n\n`;
         
-        results.slice(0, 3).forEach((result, idx) => {
-            answer += `${idx + 1}. ${result.text}\n`;
+        results.slice(0, 5).forEach((result, idx) => {
+            const confidence = (result.score * 100).toFixed(0);
+            const source = result.source === 'activities' ? '📋' : 
+                          result.source === 'industrial' ? '🏭' : '💰';
+            answer += `${idx + 1}. ${source} ${result.text} (${confidence}%)\n`;
         });
 
-        answer += '\nيمكنك السؤال عن أي من هذه العناصر للحصول على تفاصيل أكثر.';
-        
+        answer += '\n💡 *اسأل عن أي نتيجة للحصول على التفاصيل*';
         return answer;
     }
 
     /**
-     * Main answer function
+     * الدالة الرئيسية للإجابة
      */
     async function answer(query, history = []) {
-        // Parse intent
+        // تحليل النية
         const intent = IntentEngine.parseIntent(query, history);
         const context = IntentEngine.buildContext(history);
 
-        // Handle complex queries
-        const subQueries = IntentEngine.decomposeQuery(query);
-        if (subQueries && subQueries.length > 1) {
-            // Process each sub-query
-            const answers = [];
-            for (const subQuery of subQueries) {
-                const subResult = await answer(subQuery.text, history);
-                answers.push(subResult.answer);
-            }
-            
-            return {
-                answer: answers.join('\n\n---\n\n'),
-                intent,
-                entities: intent.entities,
-                sources: [],
-                isComplex: true
-            };
-        }
+        console.log(`🎯 Intent: ${intent.primary.name} (confidence: ${(intent.primary.confidence * 100).toFixed(0)}%)`);
 
-        // Determine search parameters
+        // تحديد معاملات البحث
         let dataType = 'all';
         let topK = 5;
+        let threshold = 0.25;
         
         if (intent.primary.name.startsWith('ACTIVITY')) {
             dataType = 'activities';
             topK = 3;
+            threshold = 0.20;
         } else if (intent.primary.name.startsWith('INDUSTRIAL_ZONE')) {
             dataType = 'industrial';
             topK = 10;
+            threshold = 0.30;
         } else if (intent.primary.name.startsWith('DECISION104')) {
             dataType = 'decision104';
             topK = 5;
+            threshold = 0.25;
         }
 
-        // Get dynamic threshold
-        const threshold = IntentEngine.getDynamicThreshold(intent.primary.name);
+        // البحث
+        let results = await searchVectors(query, dataType, topK, threshold);
 
-        // Search
-        let results = searchVectors(query, dataType, topK, threshold);
-
-        // Re-rank with context
+        // إعادة الترتيب
         results = rerankResults(results, intent, context);
 
-        // Extract structured information
+        // استخراج المعلومات
         const extracted = extractInformation(results, intent);
 
-        // Generate answer
+        // توليد الإجابة
         const answerText = generateAnswer(query, results, intent, extracted);
 
         return {
@@ -488,9 +463,9 @@ const ExpertAssistant = (() => {
         };
     }
 
+    // واجهة برمجية بسيطة
     return {
         answer,
-        searchVectors,
-        cosineSimilarity
+        searchVectors
     };
 })();
