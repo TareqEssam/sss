@@ -3,84 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>المستشار- محسّن</title>
-    <link rel="stylesheet" href="style.css">
-    <style>
-        /* أنماط إضافية للأزرار */
-        .interactive-buttons {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-            margin: 20px 0;
-        }
-        
-        .interactive-btn {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border: none;
-            padding: 12px 20px;
-            border-radius: 25px;
-            cursor: pointer;
-            font-size: 0.95rem;
-            font-weight: 600;
-            transition: all 0.3s ease;
-            box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
-        }
-        
-        .interactive-btn:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.5);
-        }
-        
-        .related-questions {
-            background: #f8f9fa;
-            padding: 15px;
-            border-radius: 12px;
-            margin: 20px 0;
-            border-right: 4px solid #667eea;
-        }
-        
-        .related-question {
-            background: white;
-            padding: 10px 15px;
-            margin: 8px 0;
-            border-radius: 20px;
-            cursor: pointer;
-            transition: all 0.2s;
-            border: 1px solid #e0e0e0;
-        }
-        
-        .related-question:hover {
-            background: #667eea;
-            color: white;
-            transform: translateX(-5px);
-        }
-        
-        .links-section {
-            background: linear-gradient(135deg, #e0f7fa 0%, #f1f8e9 100%);
-            padding: 15px;
-            border-radius: 12px;
-            margin: 15px 0;
-        }
-        
-        .link-item {
-            background: white;
-            padding: 12px 15px;
-            margin: 8px 0;
-            border-radius: 8px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            text-decoration: none;
-            color: #1e40af;
-            font-weight: 600;
-            transition: all 0.2s;
-        }
-        
-        .link-item:hover {
-            transform: translateX(-5px);
-        }
-    </style>
+    <title>المستشار الخبير الذكي - محسّن</title>
+    <link rel="stylesheet" href="style-v2.css">
 </head>
 <body>
     <div class="container">
@@ -137,10 +61,11 @@
         </div>
     </div>
 
+    <!-- تحميل المكتبات بالترتيب الصحيح -->
     <script src="loader.js"></script>
     <script src="intent-engine-v2.js"></script>
     <script src="core-v5-expert.js"></script>
-    <script src="smart-assistant-intelligence.js"></script>
+    <script src="smart-assistant-intelligence-v2.js"></script>
     
     <script>
         let isProcessing = false;
@@ -183,8 +108,8 @@
 
                 const thinkingId = addMessage('assistant', 'جاري التفكير...', true);
 
-                // استخدام النظام الذكي
-                const result = await SmartAssistant.processIntelligently(query);
+                // استخدام النظام الذكي المحسّن
+                const result = await SmartAssistantV2.processIntelligently(query);
 
                 document.getElementById(thinkingId)?.remove();
 
@@ -236,6 +161,8 @@
             messageDiv.className = 'message assistant-message';
 
             let content = `<div class="message-content">`;
+            
+            // تنسيق الإجابة
             content += formatAnswer(response.answer);
             
             // أزرار تفاعلية
@@ -290,13 +217,33 @@
         }
 
         function formatAnswer(text) {
+            if (typeof text !== 'string') return '';
+            
             text = escapeHtml(text);
-            text = text.replace(/###\s+(.+)/g, '<h3 style="margin: 15px 0 10px 0; color: #1e40af;">$1</h3>');
-            text = text.replace(/####\s+(.+)/g, '<h4 style="margin: 10px 0 8px 0;">$1</h4>');
+            
+            // تنسيق Markdown
+            // العناوين
+            text = text.replace(/^# (.+)$/gm, '<h1>$1</h1>');
+            text = text.replace(/^## (.+)$/gm, '<h2>$1</h2>');
+            text = text.replace(/^### (.+)$/gm, '<h3>$1</h3>');
+            text = text.replace(/^#### (.+)$/gm, '<h4>$4</h4>');
+            
+            // Bold و Italic
             text = text.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
             text = text.replace(/\*(.+?)\*/g, '<em>$1</em>');
-            text = text.replace(/\n\n/g, '<br><br>');
+            
+            // الفواصل
+            text = text.replace(/^---$/gm, '<hr>');
+            
+            // الأسطر
+            text = text.replace(/\n\n/g, '</p><p>');
             text = text.replace(/\n/g, '<br>');
+            
+            // تضمين في فقرات
+            if (!text.startsWith('<h1>') && !text.startsWith('<h2>')) {
+                text = '<p>' + text + '</p>';
+            }
+            
             return text;
         }
 
@@ -321,4 +268,3 @@
     </script>
 </body>
 </html>
-
