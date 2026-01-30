@@ -135,9 +135,15 @@ const SmartAssistant = (() => {
         const preview = (result.original_data?.text_preview || '').toLowerCase();
         const combined = text + ' ' + preview;
         
+        // فحص الهيكل - إذا كان يحتوي على | فهو نشاط منظم
+        if (preview.includes('|') && (preview.includes('النشاط:') || preview.includes('المتطلبات:'))) {
+            return 'activity';
+        }
+        
         // كلمات دالة على الأنشطة
         if (combined.includes('ترخيص') || combined.includes('نشاط') || 
-            combined.includes('جهة مختصة') || combined.includes('سند تشريعي')) {
+            combined.includes('متطلبات:') || combined.includes('الجهة:') ||
+            combined.includes('المصطلحات:') || combined.includes('ملاحظات فنية:')) {
             return 'activity';
         }
         
@@ -148,11 +154,12 @@ const SmartAssistant = (() => {
         }
         
         // كلمات دالة على القرار 104
-        if (combined.includes('قطاع') || combined.includes('القرار 104')) {
+        if (combined.includes('قطاع أ') || combined.includes('قطاع ب') || 
+            combined.includes('الصناعة |') || combined.includes('الزراعة |')) {
             return 'decision104';
         }
         
-        return 'unknown';
+        return 'activity'; // افتراضياً نشاط
     }
     
     /**
@@ -372,49 +379,56 @@ const SmartAssistant = (() => {
         const activityName = extractActivityName(result);
         answer += `### 🏢 ${activityName}\n\n`;
         
-        // وصف النشاط
-        const description = extractActivityDescription(preview);
-        if (description) {
-            answer += `#### 📝 وصف النشاط:\n${description}\n\n`;
+        // استخراج البيانات من النص المنظم
+        const sections = parseStructuredText(preview);
+        
+        // النشاط (الوصف)
+        if (sections.النشاط || sections.act) {
+            answer += `#### 📝 النشاط:\n${sections.النشاط || sections.act}\n\n`;
         }
         
-        // التراخيص المطلوبة
-        const licenses = extractSection(preview, 'التراخيص المطلوبة');
-        if (licenses) {
-            answer += `#### 📜 التراخيص المطلوبة:\n${licenses}\n\n`;
+        // المصطلحات
+        if (sections.المصطلحات) {
+            answer += `**🏷️ المصطلحات:** ${sections.المصطلحات}\n\n`;
+        }
+        
+        // المتطلبات (التراخيص)
+        if (sections.المتطلبات || sections.req) {
+            answer += `#### 📜 التراخيص المطلوبة:\n${sections.المتطلبات || sections.req}\n\n`;
         }
         
         // الجهة المختصة
-        const authority = extractSection(preview, 'الجهة المختصة');
-        if (authority) {
-            answer += `#### 🏛️ الجهة المختصة:\n${authority}\n\n`;
+        if (sections.الجهة || sections.auth) {
+            answer += `#### 🏛️ الجهة المختصة:\n${sections.الجهة || sections.auth}\n\n`;
         }
         
         // السند التشريعي
-        const law = extractSection(preview, 'السند التشريعي');
-        if (law) {
-            answer += `#### ⚖️ السند التشريعي:\n${law}\n\n`;
+        if (sections.القانون || sections.leg) {
+            answer += `#### ⚖️ السند التشريعي:\n${sections.القانون || sections.leg}\n\n`;
         }
         
-        // مواقع مزاولة النشاط
-        const location = extractSection(preview, 'مواقع مزاولة النشاط');
-        if (location) {
-            answer += `#### 📍 مواقع مزاولة النشاط:\n${location}\n\n`;
+        // الموقع
+        if (sections.الموقع || sections.loc) {
+            answer += `#### 📍 مواقع مزاولة النشاط:\n${sections.الموقع || sections.loc}\n\n`;
         }
         
         // الملاحظات الفنية
-        const technical = extractSection(preview, 'النقاط الفنية والإشتراطات');
-        if (technical) {
-            const formattedTech = formatTechnicalPoints(technical);
-            answer += `#### 🔧 الملاحظات والاشتراطات الفنية:\n${formattedTech}\n\n`;
+        if (sections['ملاحظات فنية'] || sections.technical) {
+            const technical = sections['ملاحظات فنية'] || sections.technical;
+            const formatted = formatTechnicalPoints(technical);
+            answer += `#### 🔧 الملاحظات الفنية:\n${formatted}\n\n`;
+        }
+        
+        // الدليل
+        if (sections.الدليل || sections.guid) {
+            answer += `**📖 الدليل الإرشادي:** ${sections.الدليل || sections.guid}\n\n`;
         }
         
         // رابط الدليل
-        const guideLink = extractLink(preview);
-        if (guideLink) {
+        if (sections.link) {
             links.push({
                 text: '📘 دليل النشاط الإرشادي الكامل',
-                url: guideLink,
+                url: sections.link,
                 icon: '📘'
             });
         }
@@ -439,10 +453,32 @@ const SmartAssistant = (() => {
             links: links,
             relatedQuestions: [
                 'ما هي الاشتراطات الفنية بالتفصيل؟',
-                'ما هي خطوات الحصول على الترخيص؟',
+                'ما هي الجهة المختصة؟',
                 'أين يمكن مزاولة هذا النشاط؟'
             ]
         };
+    }
+    
+    /**
+     * تحليل النص المنظم
+     */
+    function parseStructuredText(text) {
+        const sections = {};
+        
+        // تقسيم النص إلى أجزاء
+        const parts = text.split('|').map(p => p.trim());
+        
+        parts.forEach(part => {
+            // استخراج المفتاح والقيمة
+            const colonIndex = part.indexOf(':');
+            if (colonIndex > 0) {
+                const key = part.substring(0, colonIndex).trim();
+                const value = part.substring(colonIndex + 1).trim();
+                sections[key] = value;
+            }
+        });
+        
+        return sections;
     }
     
     /**
@@ -560,7 +596,37 @@ const SmartAssistant = (() => {
     // ===== دوال مساعدة =====
     
     function extractActivityName(result) {
-        return result.text || result.original_data?.text_preview?.split('\n')[0] || 'نشاط غير محدد';
+        const preview = result.original_data?.text_preview || result.text || '';
+        
+        // استخراج اسم النشاط من البنية المنظمة
+        if (preview.includes('النشاط:')) {
+            const match = preview.match(/النشاط:\s*([^|]+)/);
+            if (match) return match[1].trim();
+        }
+        
+        // استخراج من أول سطر
+        const firstLine = preview.split('\n')[0].split('|')[0].trim();
+        if (firstLine && firstLine.length > 3) {
+            return firstLine;
+        }
+        
+        return result.text || 'نشاط غير محدد';
+    }
+    
+    function extractShortDescription(result) {
+        const preview = result.original_data?.text_preview || '';
+        
+        // استخراج المصطلحات
+        if (preview.includes('المصطلحات:')) {
+            const match = preview.match(/المصطلحات:\s*([^|]+)/);
+            if (match) {
+                const terms = match[1].trim().substring(0, 50);
+                return terms + (match[1].length > 50 ? '...' : '');
+            }
+        }
+        
+        // استخراج من أول 60 حرف
+        return preview.substring(0, 60).split('|')[0].trim() || null;
     }
     
     function extractIndustrialName(result) {
@@ -586,12 +652,6 @@ const SmartAssistant = (() => {
         if (preview.includes('قطاع أ')) return 'قطاع أ';
         if (preview.includes('قطاع ب')) return 'قطاع ب';
         return null;
-    }
-    
-    function extractShortDescription(result) {
-        const preview = result.original_data?.text_preview || '';
-        const lines = preview.split('\n');
-        return lines[0]?.substring(0, 60) || null;
     }
     
     function extractActivityDescription(text) {
