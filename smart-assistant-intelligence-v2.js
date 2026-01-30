@@ -9,11 +9,15 @@ const SmartAssistant = (() => {
         lastQuery: null,
         lastResults: null,
         waitingForSelection: false,
-        selectedType: null
+        selectedType: null,
+        selectedActivity: null,
+        selectedIndustrial: null,
+        selectedDecision104: null,
+        conversationHistory: [] // تاريخ المحادثة
     };
     
     /**
-     * المعالجة الذكية الرئيسية
+     * المعالجة الذكية الرئيسية مع فهم السياق
      */
     async function processIntelligently(query) {
         console.log('🧠 بدء المعالجة الذكية:', query);
@@ -24,8 +28,12 @@ const SmartAssistant = (() => {
             return handleSelection(selection.index);
         }
         
+        // تحسين الاستعلام بناءً على السياق والأسئلة السابقة
+        const enhancedQuery = enhanceQueryWithContext(query);
+        console.log('📝 الاستعلام المحسّن:', enhancedQuery);
+        
         // استخدام ExpertAssistant الأصلي للبحث
-        const rawResult = await ExpertAssistant.processQuery(query);
+        const rawResult = await ExpertAssistant.processQuery(enhancedQuery);
         
         // تحليل النتائج بذكاء
         const analysis = analyzeResults(rawResult, query);
@@ -34,8 +42,87 @@ const SmartAssistant = (() => {
         conversationMemory.lastQuery = query;
         conversationMemory.lastResults = rawResult.results;
         
+        // إضافة للتاريخ
+        conversationMemory.conversationHistory.push({
+            query: query,
+            enhancedQuery: enhancedQuery,
+            timestamp: Date.now(),
+            resultType: analysis.dominantType
+        });
+        
+        // الاحتفاظ بآخر 10 أسئلة فقط
+        if (conversationMemory.conversationHistory.length > 10) {
+            conversationMemory.conversationHistory.shift();
+        }
+        
         // توليد الرد الذكي
         return generateSmartResponse(analysis, rawResult);
+    }
+    
+    /**
+     * تحسين الاستعلام بناءً على السياق والتاريخ
+     */
+    function enhanceQueryWithContext(query) {
+        const normalized = query.toLowerCase().trim();
+        
+        // أسئلة تحتاج سياق النشاط/المنطقة المحددة
+        const contextualPatterns = [
+            { pattern: /^ما هي التراخيص|^التراخيص|^تراخيص/i, field: 'licenses' },
+            { pattern: /^الجهة المختصة|^الجهات|^من المسؤول/i, field: 'authority' },
+            { pattern: /^القانون|^السند التشريعي|^التشريع/i, field: 'law' },
+            { pattern: /^الدليل|^الإرشادات/i, field: 'guide' },
+            { pattern: /^النقاط الفنية|^الاشتراطات|^المتطلبات الفنية|^مساحة/i, field: 'technical' },
+            { pattern: /^الموقع|^المكان|^اين|^مواقع/i, field: 'location' },
+            { pattern: /^كم عدد|^عدد/i, field: 'count' }
+        ];
+        
+        const matchedPattern = contextualPatterns.find(p => p.pattern.test(normalized));
+        
+        // إذا كان السؤال يحتاج سياق
+        if (matchedPattern) {
+            // إضافة اسم النشاط/المنطقة المحددة
+            if (conversationMemory.selectedActivity) {
+                return `${conversationMemory.selectedActivity.name} ${query}`;
+            }
+            if (conversationMemory.selectedIndustrial) {
+                return `${conversationMemory.selectedIndustrial.name} ${query}`;
+            }
+            if (conversationMemory.selectedDecision104) {
+                return `${conversationMemory.selectedDecision104.name} ${query}`;
+            }
+            
+            // البحث في التاريخ عن آخر نشاط/منطقة تم ذكرها
+            for (let i = conversationMemory.conversationHistory.length - 1; i >= 0; i--) {
+                const historyItem = conversationMemory.conversationHistory[i];
+                if (historyItem.resultType && historyItem.enhancedQuery) {
+                    // استخدام الاستعلام المحسن السابق كسياق
+                    const words = historyItem.enhancedQuery.split(' ');
+                    if (words.length > 2) {
+                        return `${words.slice(0, 3).join(' ')} ${query}`;
+                    }
+                }
+            }
+        }
+        
+        // أسئلة مرتبطة (مثل: "وماذا عن..." أو "أيضاً...")
+        const followUpPatterns = [
+            /^و(ماذا عن|كذلك|أيضا)/i,
+            /^(كذلك|أيضا|بالإضافة)/i,
+            /^(هل|ماذا) (أيضا|كذلك)/i
+        ];
+        
+        if (followUpPatterns.some(p => p.test(normalized))) {
+            // هذا سؤال متابعة، نستخدم سياق آخر سؤال
+            if (conversationMemory.conversationHistory.length > 0) {
+                const lastItem = conversationMemory.conversationHistory[conversationMemory.conversationHistory.length - 1];
+                if (lastItem.enhancedQuery) {
+                    const words = lastItem.enhancedQuery.split(' ');
+                    return `${words.slice(0, 2).join(' ')} ${query}`;
+                }
+            }
+        }
+        
+        return query;
     }
     
     /**
@@ -218,6 +305,33 @@ const SmartAssistant = (() => {
         
         conversationMemory.waitingForSelection = false;
         
+        // حفظ الاختيار في الذاكرة حسب النوع
+        if (type === 'activity') {
+            const activityName = extractActivityName(selected);
+            conversationMemory.selectedActivity = {
+                name: activityName,
+                data: selected.original_data,
+                result: selected
+            };
+            console.log('💾 تم حفظ النشاط في الذاكرة:', activityName);
+        } else if (type === 'industrial') {
+            const zoneName = extractIndustrialName(selected);
+            conversationMemory.selectedIndustrial = {
+                name: zoneName,
+                data: selected.original_data,
+                result: selected
+            };
+            console.log('💾 تم حفظ المنطقة في الذاكرة:', zoneName);
+        } else if (type === 'decision104') {
+            const activityName = extractDecision104Name(selected);
+            conversationMemory.selectedDecision104 = {
+                name: activityName,
+                data: selected.original_data,
+                result: selected
+            };
+            console.log('💾 تم حفظ نشاط القرار 104 في الذاكرة:', activityName);
+        }
+        
         // عرض التفاصيل الكاملة
         return generateDetailedView(selected, type);
     }
@@ -373,6 +487,14 @@ const SmartAssistant = (() => {
         const activityName = extractActivityName(result);
         answer += `### 🏢 ${activityName}\n\n`;
         
+        // حفظ في الذاكرة
+        conversationMemory.selectedActivity = {
+            name: activityName,
+            data: data,
+            result: result
+        };
+        console.log('💾 تم حفظ النشاط في الذاكرة:', activityName);
+        
         // وصف النشاط
         const description = extractActivityDescription(preview);
         if (description) {
@@ -460,6 +582,14 @@ const SmartAssistant = (() => {
         const zoneName = extractIndustrialName(result);
         answer += `### 🏭 ${zoneName}\n\n`;
         
+        // حفظ في الذاكرة
+        conversationMemory.selectedIndustrial = {
+            name: zoneName,
+            data: data,
+            result: result
+        };
+        console.log('💾 تم حفظ المنطقة في الذاكرة:', zoneName);
+        
         // المحافظة
         const governorate = extractGovernorate(result);
         if (governorate) {
@@ -517,6 +647,14 @@ const SmartAssistant = (() => {
         const activityName = extractDecision104Name(result);
         answer += `### 💰 ${activityName}\n\n`;
         answer += `**(من أنشطة القرار 104 - يستفيد من الحوافز الاستثمارية)**\n\n`;
+        
+        // حفظ في الذاكرة
+        conversationMemory.selectedDecision104 = {
+            name: activityName,
+            data: data,
+            result: result
+        };
+        console.log('💾 تم حفظ نشاط القرار 104 في الذاكرة:', activityName);
         
         // القطاع
         const sector = extractSector(result);
