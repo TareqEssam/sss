@@ -35,6 +35,11 @@
         </div>
 
         <div class="input-container">
+            <!-- مؤشر الذاكرة -->
+            <div id="memory-indicator" class="memory-indicator" style="display: none;">
+                <span id="memory-text"></span>
+            </div>
+            
             <div class="quick-questions">
                 <button class="quick-btn" onclick="askQuestion('ما هي شروط ترخيص مصنع ملابس؟')">
                     شروط ترخيص مصنع
@@ -108,12 +113,15 @@
 
                 const thinkingId = addMessage('assistant', 'جاري التفكير...', true);
 
-                // استخدام النظام الذكي المحسّن
-                const result = await SmartAssistantV2.processIntelligently(query);
+                // استخدام النظام الذكي
+                const result = await SmartAssistant.processIntelligently(query);
 
                 document.getElementById(thinkingId)?.remove();
 
                 addEnhancedMessage(result);
+                
+                // تحديث مؤشر الذاكرة
+                updateMemoryIndicator();
 
             } catch (error) {
                 console.error('❌ خطأ:', error);
@@ -257,6 +265,25 @@
         function askQuestion(question) {
             document.getElementById('query-input').value = question;
             sendQuery();
+        }
+        
+        function updateMemoryIndicator() {
+            const memory = SmartAssistant.getMemory();
+            const indicator = document.getElementById('memory-indicator');
+            const text = document.getElementById('memory-text');
+            
+            if (memory.selectedActivity) {
+                indicator.style.display = 'block';
+                text.textContent = `🎯 السياق: ${memory.selectedActivity.name}`;
+            } else if (memory.selectedIndustrial) {
+                indicator.style.display = 'block';
+                text.textContent = `🏭 السياق: ${memory.selectedIndustrial.name}`;
+            } else if (memory.selectedDecision104) {
+                indicator.style.display = 'block';
+                text.textContent = `💰 السياق: ${memory.selectedDecision104.name}`;
+            } else {
+                indicator.style.display = 'none';
+            }
         }
 
         document.getElementById('query-input')?.addEventListener('keydown', function(e) {
