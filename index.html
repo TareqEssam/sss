@@ -140,11 +140,10 @@
     <script src="loader.js"></script>
     <script src="intent-engine-v2.js"></script>
     <script src="core-v5-expert.js"></script>
-    <script src="enhanced-ui-wrapper.js"></script>
+    <script src="smart-assistant-intelligence.js"></script>
     
     <script>
         let isProcessing = false;
-        let lastResponse = null;
 
         window.addEventListener('load', async () => {
             try {
@@ -184,35 +183,12 @@
 
                 const thinkingId = addMessage('assistant', 'جاري التفكير...', true);
 
-                // فحص إذا كان المستخدم يختار من خيارات سابقة
-                const selection = EnhancedUI.handleUserSelection(query, EnhancedUI.getLastResults());
-                
-                let result;
-                if (selection.isSelection) {
-                    // المستخدم اختار من الخيارات
-                    console.log('✅ اختيار:', selection.selectedIndex);
-                    // إعادة معالجة النتيجة المختارة
-                    result = await ExpertAssistant.processQuery(selection.selectedResult.text || query);
-                } else {
-                    // استعلام عادي
-                    result = await ExpertAssistant.processQuery(query);
-                }
+                // استخدام النظام الذكي
+                const result = await SmartAssistant.processIntelligently(query);
 
                 document.getElementById(thinkingId)?.remove();
 
-                // تحسين النتيجة
-                const enhanced = EnhancedUI.enhanceResponse(result);
-                
-                // حفظ النتائج للاستخدام لاحقاً
-                if (enhanced.hasMultipleOptions) {
-                    EnhancedUI.saveResults(enhanced.results);
-                } else {
-                    EnhancedUI.saveResults(null);
-                }
-                
-                lastResponse = enhanced;
-
-                addEnhancedMessage(enhanced);
+                addEnhancedMessage(result);
 
             } catch (error) {
                 console.error('❌ خطأ:', error);
@@ -263,10 +239,16 @@
             content += formatAnswer(response.answer);
             
             // أزرار تفاعلية
-            if (response.interactiveButtons && response.interactiveButtons.length > 0) {
+            if (response.buttons && response.buttons.length > 0) {
                 content += `<div class="interactive-buttons">`;
-                response.interactiveButtons.forEach(btn => {
-                    content += `<button class="interactive-btn" onclick="selectOption(${btn.data})">${escapeHtml(btn.text)}</button>`;
+                response.buttons.forEach(btn => {
+                    if (btn.number) {
+                        // زر اختيار
+                        content += `<button class="interactive-btn" onclick="selectOption(${btn.number})">${escapeHtml(btn.text)}</button>`;
+                    } else if (btn.action === 'search') {
+                        // زر بحث
+                        content += `<button class="interactive-btn" onclick="askQuestion('${escapeHtml(btn.query)}')">${escapeHtml(btn.text)}</button>`;
+                    }
                 });
                 content += `</div>`;
             }
@@ -279,6 +261,7 @@
                     content += `<a href="${link.url}" target="_blank" class="link-item">
                         <span>${link.icon}</span>
                         <span>${escapeHtml(link.text)}</span>
+                        <span style="margin-right: auto;">↗️</span>
                     </a>`;
                 });
                 content += `</div>`;
@@ -301,8 +284,9 @@
             chatContainer.scrollTop = chatContainer.scrollHeight;
         }
 
-        function selectOption(index) {
-            askQuestion((index + 1).toString());
+        function selectOption(number) {
+            console.log('✅ اختيار رقم:', number);
+            askQuestion(number.toString());
         }
 
         function formatAnswer(text) {
