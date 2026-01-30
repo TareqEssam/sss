@@ -1,6 +1,6 @@
 /* 
- * Enhanced Expert Assistant Styling
- * تنسيق احترافي للمستشار الخبير الذكي
+ * Enhanced Expert Assistant Styling v2
+ * تنسيق احترافي محسّن للأجهزة المختلفة
  */
 
 * {
@@ -194,25 +194,6 @@ body {
     font-weight: 500;
 }
 
-.intelligence-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    background: var(--accent-gradient);
-    color: white;
-    padding: 8px 18px;
-    border-radius: 25px;
-    font-size: 0.9rem;
-    font-weight: 700;
-    box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
-    transition: transform 0.2s;
-}
-
-.intelligence-badge:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
-}
-
 /* ==================== Messages ==================== */
 .message {
     margin-bottom: 25px;
@@ -262,6 +243,51 @@ body {
     border: 1px solid var(--border);
 }
 
+/* تنسيق Markdown في الرسائل */
+.assistant-message h1 {
+    color: var(--accent-color);
+    font-size: 1.8rem;
+    margin: 10px 0 15px 0;
+    font-weight: 800;
+    border-bottom: 3px solid var(--accent-color);
+    padding-bottom: 10px;
+}
+
+.assistant-message h2 {
+    color: var(--primary-color);
+    font-size: 1.4rem;
+    margin: 20px 0 12px 0;
+    font-weight: 700;
+}
+
+.assistant-message h3 {
+    color: var(--primary-dark);
+    font-size: 1.2rem;
+    margin: 15px 0 10px 0;
+    font-weight: 600;
+}
+
+.assistant-message h4 {
+    color: var(--text-primary);
+    font-size: 1.1rem;
+    margin: 12px 0 8px 0;
+    font-weight: 600;
+}
+
+.assistant-message p {
+    margin: 10px 0;
+}
+
+.assistant-message strong {
+    color: var(--primary-color);
+    font-weight: 700;
+}
+
+.assistant-message em {
+    font-style: italic;
+    color: var(--text-secondary);
+}
+
 .system-message {
     text-align: center;
 }
@@ -277,87 +303,99 @@ body {
     box-shadow: 0 2px 6px rgba(146, 64, 14, 0.15);
 }
 
-/* ==================== Sources & Analysis ==================== */
-.sources {
-    margin-top: 20px;
-    padding: 18px;
-    background: white;
-    border-radius: 12px;
-    border: 2px solid var(--border);
-    box-shadow: 0 2px 6px var(--shadow);
-}
-
-.sources-header {
-    font-weight: 700;
-    color: var(--accent-color);
-    margin-bottom: 12px;
-    font-size: 1rem;
-}
-
-.source-item {
+/* ==================== Interactive Buttons ==================== */
+.interactive-buttons {
     display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 10px 0;
-    border-bottom: 1px solid #f1f5f9;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin: 20px 0;
+}
+
+.interactive-btn {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    padding: 12px 20px;
+    border-radius: 25px;
+    cursor: pointer;
     font-size: 0.95rem;
-}
-
-.source-item:last-child {
-    border-bottom: none;
-}
-
-.source-label {
-    font-weight: 700;
-    color: var(--accent-color);
-    min-width: 25px;
-}
-
-.source-text {
-    flex: 1;
-    color: var(--text-primary);
-    line-height: 1.5;
-}
-
-.confidence {
-    padding: 5px 12px;
-    border-radius: 15px;
-    font-size: 0.85rem;
-    font-weight: 700;
-    min-width: 55px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
     text-align: center;
+    min-width: 150px;
 }
 
-.confidence.high {
-    background: #d1fae5;
-    color: #065f46;
+.interactive-btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.5);
 }
 
-.confidence.medium {
-    background: #fef3c7;
-    color: #92400e;
+.interactive-btn:active {
+    transform: translateY(-1px);
 }
 
-.confidence.low {
-    background: #fee2e2;
-    color: #991b1b;
-}
-
-.analysis-panel {
-    background: #f8f9fa;
+/* ==================== Links Section ==================== */
+.links-section {
+    background: linear-gradient(135deg, #e0f7fa 0%, #f1f8e9 100%);
     padding: 15px;
-    border-radius: 10px;
-    margin-top: 15px;
-    font-size: 0.95rem;
-    border-right: 4px solid var(--accent-color);
+    border-radius: 12px;
+    margin: 15px 0;
 }
 
-.analysis-item {
+.links-section h4 {
+    margin-bottom: 10px;
+    color: var(--primary-color);
+}
+
+.link-item {
+    background: white;
+    padding: 12px 15px;
+    margin: 8px 0;
+    border-radius: 8px;
     display: flex;
     align-items: center;
     gap: 10px;
+    text-decoration: none;
+    color: #1e40af;
+    font-weight: 600;
+    transition: all 0.2s;
+    border: 1px solid var(--border);
+}
+
+.link-item:hover {
+    transform: translateX(-5px);
+    box-shadow: 0 2px 8px var(--shadow);
+}
+
+/* ==================== Related Questions ==================== */
+.related-questions {
+    background: #f8f9fa;
+    padding: 15px;
+    border-radius: 12px;
+    margin: 20px 0;
+    border-right: 4px solid #667eea;
+}
+
+.related-questions h4 {
+    margin-bottom: 10px;
+    color: var(--accent-color);
+}
+
+.related-question {
+    background: white;
+    padding: 10px 15px;
     margin: 8px 0;
-    color: var(--text-secondary);
+    border-radius: 20px;
+    cursor: pointer;
+    transition: all 0.2s;
+    border: 1px solid #e0e0e0;
+}
+
+.related-question:hover {
+    background: #667eea;
+    color: white;
+    transform: translateX(-5px);
 }
 
 /* ==================== Input Container ==================== */
@@ -457,15 +495,6 @@ body {
     box-shadow: none;
 }
 
-.memory-indicator {
-    margin-top: 12px;
-    text-align: center;
-    font-size: 0.9rem;
-    color: var(--text-secondary);
-    display: none;
-    font-weight: 600;
-}
-
 /* ==================== Scrollbar ==================== */
 .chat-container::-webkit-scrollbar {
     width: 10px;
@@ -485,7 +514,41 @@ body {
     background: linear-gradient(180deg, #94a3b8 0%, #64748b 100%);
 }
 
-/* ==================== Responsive ==================== */
+/* ==================== Loading Animation ==================== */
+@keyframes pulse {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.5;
+    }
+}
+
+.message.thinking .message-content {
+    animation: pulse 1.5s ease-in-out infinite;
+}
+
+/* ==================== Responsive - Tablet ==================== */
+@media (max-width: 1024px) {
+    .container {
+        padding: 15px;
+    }
+    
+    .header {
+        padding: 20px 25px;
+    }
+    
+    .chat-container {
+        padding: 25px 20px;
+    }
+    
+    .interactive-btn {
+        min-width: 120px;
+        font-size: 0.9rem;
+    }
+}
+
+/* ==================== Responsive - Mobile ==================== */
 @media (max-width: 768px) {
     .container {
         padding: 12px;
@@ -515,6 +578,10 @@ body {
         padding: 22px 18px;
     }
 
+    .welcome-message {
+        padding: 30px 20px;
+    }
+
     .welcome-message h2 {
         font-size: 1.7rem;
     }
@@ -526,6 +593,19 @@ body {
     .user-message .message-content,
     .assistant-message .message-content {
         max-width: 95%;
+    }
+
+    /* تنسيق العناوين على الموبايل */
+    .assistant-message h1 {
+        font-size: 1.5rem;
+    }
+
+    .assistant-message h2 {
+        font-size: 1.2rem;
+    }
+
+    .assistant-message h3 {
+        font-size: 1.1rem;
     }
 
     .quick-questions {
@@ -553,9 +633,16 @@ body {
     .interactive-btn {
         width: 100%;
         justify-content: center;
+        min-width: unset;
+    }
+
+    .link-item {
+        font-size: 0.9rem;
+        padding: 10px 12px;
     }
 }
 
+/* ==================== Responsive - Small Mobile ==================== */
 @media (max-width: 480px) {
     .header {
         padding: 15px 18px;
@@ -570,22 +657,16 @@ body {
     }
 
     .welcome-message {
-        padding: 30px 20px;
+        padding: 25px 15px;
     }
-}
+    
+    .assistant-message h1 {
+        font-size: 1.3rem;
+    }
 
-/* ==================== Loading Animation ==================== */
-@keyframes pulse {
-    0%, 100% {
-        opacity: 1;
+    .assistant-message h2 {
+        font-size: 1.1rem;
     }
-    50% {
-        opacity: 0.5;
-    }
-}
-
-.message.thinking .message-content {
-    animation: pulse 1.5s ease-in-out infinite;
 }
 
 /* ==================== Print Styles ==================== */
@@ -603,5 +684,10 @@ body {
 
     .message {
         page-break-inside: avoid;
+    }
+    
+    .interactive-btn,
+    .link-item {
+        display: none;
     }
 }
