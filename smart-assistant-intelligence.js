@@ -420,7 +420,7 @@ const SmartAssistant = (() => {
         }
         
         // فحص إذا كان في القرار 104
-        const in104 = await checkIfInDecision104(activityName);
+        const in104 = checkIfInDecision104(activityName);
         if (in104) {
             answer += `\n---\n\n✅ **هذا النشاط وارد ضمن أنشطة القرار 104 ويستفيد من الحوافز**\n`;
             buttons.push({
@@ -626,7 +626,7 @@ const SmartAssistant = (() => {
         return formatted || text;
     }
     
-    async function checkIfInDecision104(activityName) {
+    function checkIfInDecision104(activityName) {
         // بحث سريع في قاعدة القرار 104
         const data = DataLoader.getDataByType('decision104');
         if (!data) return false;
